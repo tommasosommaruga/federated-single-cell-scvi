@@ -1,0 +1,31 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "federated-scvi-dynamic"
+version = "1.0.0"
+description = "A federated learning example for scvi-tools using Flower (dynamic version)"
+license = "Apache-2.0"
+dependencies = [
+    "flwr[simulation]>=1.9.0",
+    "scvi-tools>=1.1.2",
+    "scanpy>=1.9.8",
+    "torch>=2.1.0",
+    "pandas>=2.0.0",
+    "numpy>=1.24.0",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["."]
+
+[tool.flwr.app]
+# This section tells Flower how to run your federated application.
+components.serverapp = "server_dynamic:app"
+components.clientapp = "client_dynamic:app"
+
+[tool.flwr.app.config]
+# Defines the number of clients to simulate.
+num_clients = 2
+# The number of rounds includes one discovery round + training rounds
+num_rounds = 4

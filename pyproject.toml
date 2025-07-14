@@ -1,0 +1,30 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "federated-scvi-hardcoded"
+version = "1.0.0"
+description = "A federated learning example for scvi-tools using Flower (hardcoded version)"
+license = "Apache-2.0"
+dependencies = [
+    "flwr[simulation]>=1.9.0",
+    "scvi-tools>=1.1.2",
+    "scanpy>=1.9.8",
+    "torch>=2.1.0",
+    "pandas>=2.0.0",
+    "numpy>=1.24.0",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["federated_scvi_hardcoded"]
+
+[tool.flwr.app]
+# This section tells Flower how to run your federated application.
+components.serverapp = "federated_scvi_hardcoded.server_hardcoded:app"
+components.clientapp = "federated_scvi_hardcoded.client_hardcoded:app"
+
+[tool.flwr.app.config]
+# Defines the number of clients to simulate.
+num_clients = 2
+num_rounds = 3
