@@ -56,7 +56,7 @@ Here are two ways to enforce this:
 <br>
 <br>
 
-### 3. Categorical Mappings Coordination
+### 3. Categorical Mappings Coordination (FOR THE MOMENT IGNORED)
 
 To ensure a category like "T-cell" is encoded as `0` for all clients, a global mapping is needed.
 ```python
@@ -68,13 +68,3 @@ scvi.model.SCVI.setup_anndata(pancreas_ref, batch_key="tech", layer="counts")
     1.  **Local Categories:** Each client inspects its data and sends a list of its unique category labels (e.g., `["T-cell", "B-cell"]`) to the server.
     2.  **Global Aggregation:** The server collects the lists from all clients, finds the unique set of all categories across the federation, creates a single mapping (e.g., `{"T-cell": 0, "B-cell": 1, "Macrophage": 2}`), and sorts it for consistency.
     3.  **Distribution:** The server sends this final global mapping back to all clients to use for encoding their local data. This is a robust solution for heterogeneous data sources.
-
-### 4. Model Architecture Coordination
-
-The server must initialize a model with the correct architecture (e.g., `n_input`, `n_batch`, `n_labels`) that matches the clients' preprocessed data.
-
-1.  **Manual Configuration:** The simplest way is to manually provide these dimensions to the server script. `n_input` would be the number of HVGs (e.g., 2000), and `n_batch` and `n_labels` would be the total number of unique batches and labels across the entire federated dataset. This requires knowing these values in advance and can be error-prone if the dataset changes.
-2.  **Dynamic Configuration via a "Discovery" Round:**
-    *   **How it works:** The server can initiate a "discovery" round before training.
-    *   In this round, clients would preprocess their data and report back the resulting dimensions (`adata.n_vars`, number of unique batches, number of unique labels) to the server.
-    *   The server then uses this information to initialize the global model with the correct architecture before starting the first training round. This automates the setup, reduces the chance of manual error, and makes the system more adaptable.

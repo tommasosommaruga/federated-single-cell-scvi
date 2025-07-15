@@ -2,6 +2,8 @@ import flwr as fl
 import scvi
 import torch
 import scanpy as sc
+import anndata
+import pandas as pd
 from flwr.common import Context, Parameters, ndarrays_to_parameters
 from flwr.server import ServerApp, ServerConfig, ServerAppComponents
 from flwr.server.strategy import FedAvg
@@ -12,35 +14,41 @@ from flwr.server.strategy import FedAvg
 
 # To make this realistic, we derive the HVG list and categories once from the full dataset.
 # This simulates the outcome of a pre-federation analysis.
-adata_full = scvi.data.pancreas()
+adata_full = sc.read_h5ad("./data/pancreas.h5ad")
 sc.pp.highly_variable_genes(
-    adata_full, n_top_genes=2000, flavor="seurat_v3", batch_key="batch", subset=True
+    adata_full, n_top_genes=2000, flavor="seurat_v3", batch_key="tech", subset=True
 )
 HVG_LIST = adata_full.var_names.tolist()
-
+print(adata_full.obs)
 # A pre-defined global mapping for all categorical variables.
 GLOBAL_CAT_MAPPINGS = {
-    "batch": {
-        label: i for i, label in enumerate(sorted(adata_full.obs.batch.unique()))
+    "tech": {
+        label: i for i, label in enumerate(sorted(adata_full.obs.tech.unique()))
     },
-    "cell_type": {
-        label: i for i, label in enumerate(sorted(adata_full.obs.cell_type.unique()))
+    "celltype": {
+        label: i for i, label in enumerate(sorted(adata_full.obs.celltype.unique()))
     },
 }
 
 # Pre-defined model architecture dimensions
 N_INPUT = len(HVG_LIST)
-N_BATCH = len(GLOBAL_CAT_MAPPINGS["batch"])
-N_LABELS = len(GLOBAL_CAT_MAPPINGS["cell_type"])
+N_BATCH = len(GLOBAL_CAT_MAPPINGS["tech"])
+N_LABELS = len(GLOBAL_CAT_MAPPINGS["celltype"])
 
 
 # 2. SERVER-SIDE MODEL INITIALIZATION
 def get_initial_parameters() -> Parameters:
     """Create a dummy model instance to get the initial weights."""
+    # Create a dummy AnnData object with random but sensitive values
+    dummy_X = torch.randn(10, N_INPUT) * 0.1  # 10 cells, N_INPUT genes, small random values
+    dummy_obs = pd.DataFrame({
+        "tech": [list(GLOBAL_CAT_MAPPINGS["tech"].keys())[0]] * 10,
+        "celltype": [list(GLOBAL_CAT_MAPPINGS["celltype"].keys())[0]] * 10
+    })
+    dummy_adata = anndata.AnnData(X=dummy_X.numpy(), obs=dummy_obs)
+    scvi.model.SCVI.setup_anndata(dummy_adata, batch_key="tech")
     model = scvi.model.SCVI(
-        n_input=N_INPUT,
-        n_batch=N_BATCH,
-        n_labels=N_LABELS,
+        dummy_adata,
         use_layer_norm="both",
         use_batch_norm="none",
         encode_covariates=True,

@@ -3,9 +3,9 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "federated-scvi-hardcoded"
+name = "federated-scvi-flower"
 version = "1.0.0"
-description = "A federated learning example for scvi-tools using Flower (hardcoded version)"
+description = "A federated learning example for scvi-tools using Flower"
 license = "Apache-2.0"
 dependencies = [
     "flwr[simulation]>=1.9.0",
@@ -14,17 +14,28 @@ dependencies = [
     "torch>=2.1.0",
     "pandas>=2.0.0",
     "numpy>=1.24.0",
+    "anndata>=0.9.0"
 ]
 
 [tool.hatch.build.targets.wheel]
-packages = ["federated_scvi_hardcoded"]
+packages = ["."]
 
 [tool.flwr.app]
-# This section tells Flower how to run your federated application.
-components.serverapp = "federated_scvi_hardcoded.server_hardcoded:app"
-components.clientapp = "federated_scvi_hardcoded.client_hardcoded:app"
+publisher = "tommaso-sommaruga"
+
+[tool.flwr.app.components]
+serverapp = "federated_scvi_flower.server_scvi:app"
+clientapp = "federated_scvi_flower.client_scvi:app"
 
 [tool.flwr.app.config]
 # Defines the number of clients to simulate.
-num_clients = 2
+num_clients = 3
 num_rounds = 3
+local-epochs = 3
+hvg_list_path = "data/hvg_list.json"
+
+[tool.flwr.federations]
+default = "local-simulation"
+
+[tool.flwr.federations.local-simulation]
+options.num-supernodes = 3

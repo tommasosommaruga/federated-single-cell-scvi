@@ -45,8 +45,8 @@ Before training, the model must be set up with the client's `AnnData` object. Th
 scvi.model.SCVI.setup_anndata(
     adata,
     layer="counts",
-    batch_key="batch_id", # Assumes 'batch_id' column exists in adata.obs
-    labels_key="cell_type" # Assumes 'cell_type' column exists in adata.obs
+    batch_key="tech", 
+    labels_key="celltype" 
 )
 ```
 
