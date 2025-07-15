@@ -185,3 +185,4 @@ cython_debug/
 /scvi-tools-main
 /scvi-tools
 data/pancreas.h5ad
+federated_scvi_flower/final_server_model_adata.h5ad

@@ -2,6 +2,7 @@ import scvi
 import torch
 import numpy as np
 from federated_scvi_flower.data_utils_scvi import ensure_hvg_genes
+import scanpy as sc
 
 def get_scvi_model(adata, hvg_list=None, partition_id=None):
     if hvg_list is not None:
@@ -48,4 +49,18 @@ def evaluate_scvi(model, adata):
         adata.obs["batch"] = adata.obs["tech"] if "tech" in adata.obs else "batch0"
     # Evaluate ELBO on the given AnnData
     elbo = model.get_elbo(adata)
-    return float(elbo) 
+    return float(elbo)
+
+def plot_latent_umap(adata, latent_key="X_scVI", color=["tech", "celltype"], save=None, show=True):
+    import os
+    # Ensure directory exists if saving
+    if save is not None:
+        dirpath = os.path.dirname(os.path.abspath(save))
+        if dirpath and dirpath != os.path.abspath(""):
+            print(f"DEBUG: Creating directory (and parents if needed): {dirpath}")
+            os.makedirs(dirpath, exist_ok=True)
+    # Compute neighbors and UMAP if not already present
+    if "X_umap" not in adata.obsm:
+        sc.pp.neighbors(adata, use_rep=latent_key)
+        sc.tl.umap(adata)
+    sc.pl.umap(adata, color=color, save=save, show=show) 

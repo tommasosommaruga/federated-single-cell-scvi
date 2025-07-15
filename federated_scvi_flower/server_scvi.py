@@ -1,8 +1,8 @@
 import logging
 from flwr.server import ServerApp, ServerAppComponents, ServerConfig
 from flwr.server.strategy import FedAvg
-from flwr.common import Context, ndarrays_to_parameters
-from federated_scvi_flower.model_utils_scvi import get_scvi_model, get_weights
+from flwr.common import Context, ndarrays_to_parameters, parameters_to_ndarrays
+from federated_scvi_flower.model_utils_scvi import get_scvi_model, get_weights, set_weights, plot_latent_umap
 import anndata
 import scanpy as sc
 import scvi
@@ -32,6 +32,7 @@ def server_fn(context: Context) -> ServerAppComponents:
     num_rounds = int(context.run_config.get("num_rounds", 3))
     epochs = int(context.run_config.get("local-epochs", 1))
     print(f"[server_scvi] num_clients: {num_clients}, context.run_config.: {context.run_config}")
+    global model, adata_ref
 
     adata_path = os.path.join("data", "pancreas.h5ad")
     adata = anndata.read_h5ad(adata_path)
@@ -60,9 +61,6 @@ def server_fn(context: Context) -> ServerAppComponents:
         critical_logger.info("ORDER MISMATCH between adata_ref.var_names and hvg_list!")
         
     model = get_scvi_model(adata_ref, hvg_list)
-    # Log state_dict keys and shapes before sending initial parameters
-    state_shapes = {k: v.shape for k, v in model.module.state_dict().items()}
-    # print(f"[SERVER][DEBUG] Model state_dict keys and shapes before sending initial parameters: {state_shapes}")
     initial_parameters = ndarrays_to_parameters(get_weights(model))
     strategy = FedAvg(
         initial_parameters=initial_parameters,
@@ -76,4 +74,28 @@ def server_fn(context: Context) -> ServerAppComponents:
         config=ServerConfig(num_rounds=num_rounds)
     )
 
-app = ServerApp(server_fn=server_fn) 
+app = ServerApp(server_fn=server_fn)
+
+# Save the final model and AnnData after training
+def save_final_model_and_adata(model, adata, path_prefix="federated_scvi_flower/final_server_model"):
+    import torch
+    model_path = f"{path_prefix}.pt"
+    adata_path = f"{path_prefix}_adata.h5ad"
+    torch.save(model.module.state_dict(), model_path)
+    adata.write(adata_path)
+    print(f"Saved final model to {model_path} and AnnData to {adata_path}")
+
+# Patch the ServerApp to call this after training
+import atexit
+model = None
+adata_ref = None
+def _save_on_exit():
+    try:
+        global model, adata_ref
+        if model is not None and adata_ref is not None:
+            save_final_model_and_adata(model, adata_ref)
+        else:
+            print("[WARN] Model or AnnData not defined at exit, not saving.")
+    except Exception as e:
+        print(f"[WARN] Could not save final model: {e}")
+atexit.register(_save_on_exit) 
