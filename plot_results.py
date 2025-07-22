@@ -78,3 +78,4 @@ sc.pl.umap(adata_combined, color="celltype", ax=axes[2], show=False, title="UMAP
 fig.tight_layout()
 fig.savefig(os.path.join(save_dir, "combined_umap_comparison.png"))
 plt.close(fig)
+print(f'File combined_umap_comparison.png saved in the {save_dir} folder!')

@@ -1,25 +1,55 @@
 from flwr.server import ServerApp, ServerAppComponents, ServerConfig
 from flwr.server.strategy import FedAvg
 from flwr.common import Context, ndarrays_to_parameters, parameters_to_ndarrays, Parameters
-from federated_scvi_flower.model_utils_scvi import get_scvi_model, get_weights, set_weights, setup_scvi_anndata
-import anndata
+from federated_scvi_flower.model_utils_scvi import get_scvi_model, get_weights, set_weights, setup_scvi_anndata, evaluate_scvi
 import os
+import csv
 import torch
-from federated_scvi_flower.data_utils_scvi import create_dummy_adata, load_batch_list, load_hvg_list
+from federated_scvi_flower.data_utils_scvi import ensure_hvg_genes, create_dummy_adata, load_batch_list, load_hvg_list
+import atexit
+import anndata as ad
 
-class FedAvgWithStore(FedAvg):
+model = None
+adata_ref = None
+global_strategy = None
+adata_test = None
+
+class FedAvgWithEval(FedAvg):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.final_parameters: Parameters = None
+        self.final_parameters = None
 
     def aggregate_fit(self, rnd, results, failures):
+        global model, adata_test
         aggregated_result = super().aggregate_fit(rnd, results, failures)
+        
         if aggregated_result is not None:
             self.final_parameters = aggregated_result[0]
+            print(f"[Server] Round {rnd} aggregated parameters successfully.", adata_test)
+            # Evaluate and log after each round
+            if model is not None and adata_test is not None:
+                weights = parameters_to_ndarrays(self.final_parameters)
+                set_weights(model, weights)
+                model.is_trained = True
+                loss = evaluate_scvi(model, adata_test)
+                print(f"[Server] Round {rnd} test loss: {loss:.4f}")
+                self.log_to_csv(rnd, loss)
+
         return aggregated_result
 
+    def log_to_csv(self, round_number, loss_value):
+        log_path = os.path.join("loss_logs","loss_curve_federated.csv")
+        os.makedirs(os.path.dirname(log_path), exist_ok=True)
+        file_exists = os.path.isfile(log_path)
+
+        with open(log_path, mode='a', newline='') as f:
+            writer = csv.writer(f)
+            if not file_exists:
+                writer.writerow(["round", "test_loss"])
+            writer.writerow([round_number, loss_value])
+
 def server_fn(context: Context) -> ServerAppComponents:
-    global model, adata_ref, global_strategy
+    global model, adata_ref, global_strategy, adata_test
 
     num_clients = int(context.run_config.get("num_clients", 2))
     num_rounds = int(context.run_config.get("num_rounds", 3))
@@ -37,10 +67,16 @@ def server_fn(context: Context) -> ServerAppComponents:
     adata_ref = create_dummy_adata(num_cells=10, num_genes=len(hvg_list), batches=batch_list)
 
     # Make sure the gene names match the HVG list
-    adata_ref.var_names = hvg_list[:adata_ref.shape[1]]
+    adata_ref = ensure_hvg_genes(adata_ref, hvg_list)
 
     # Set up AnnData for scVI
     setup_scvi_anndata(adata_ref, all_batches=batch_list)
+
+    # Load test data
+    adata_test_path = context.run_config.get("adata_test_path", "data/pancreas_test.h5ad")
+    adata_test = ad.read_h5ad(adata_test_path)
+    adata_test = ensure_hvg_genes(adata_test, hvg_list)
+    setup_scvi_anndata(adata_test, all_batches=batch_list)
 
     # Create model using dummy data
     model = get_scvi_model(adata_ref, hvg_list)
@@ -49,7 +85,7 @@ def server_fn(context: Context) -> ServerAppComponents:
     initial_parameters = ndarrays_to_parameters(get_weights(model))
 
     # Define strategy
-    strategy = FedAvgWithStore(
+    strategy = FedAvgWithEval(
         initial_parameters=initial_parameters,
         min_available_clients=num_clients,
         min_fit_clients=num_clients,
@@ -74,11 +110,6 @@ def save_final_model_and_adata(model, path_prefix="federated_scvi_flower/final_s
     else:
         torch.save(model.state_dict(), model_path)
     print(f"Saved final model to {model_path}")
-
-import atexit
-model = None
-adata_ref = None
-global_strategy = None
 
 def _save_on_exit():
     global model, adata_ref, global_strategy

@@ -12,7 +12,7 @@ import sys
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from federated_scvi_flower.data_utils_scvi import load_batch_list, ensure_hvg_genes, load_hvg_list
-from federated_scvi_flower.model_utils_scvi import get_scvi_model, train_scvi, evaluate_scvi, setup_scvi_anndata
+from federated_scvi_flower.model_utils_scvi import get_scvi_model, train_scvi_with_loss_tracking, evaluate_scvi, setup_scvi_anndata
 
 # Force CPU usage (disable CUDA)
 os.environ["CUDA_VISIBLE_DEVICES"] = ""
@@ -55,14 +55,14 @@ if os.path.exists(model_dir):
 else:
     print(f"[centralised] AnnData shape before SCVI init: {adata.shape}, genes: {list(adata.var_names[:10])}")
     print("[centralised] Training SCVI model...")
-    train_losses, test_losses = train_scvi(scvi_ref, adata, adata_test, max_epochs=100)
+    train_losses, test_losses = train_scvi_with_loss_tracking(scvi_ref, adata, adata_test, max_epochs=100)
     final_train_loss = train_losses[-1] if train_losses else 0.0
     final_test_loss = test_losses[-1] if test_losses else 0.0
 
     print(f"[centralised] Training complete. Final train loss: {final_train_loss}")
     print(f"[centralised] Evaluation complete. Test loss: {final_test_loss}")
     scvi_ref.save(model_dir, overwrite=True)
-    loss_log_path = os.path.join(save_dir, f"loss_curve_centralised.csv")
+    loss_log_path = os.path.join("loss_logs", f"loss_curve_centralised.csv")
 
     loss_df = pd.DataFrame({
         "epoch": list(range(1, len(train_losses) + 1)),

@@ -5,7 +5,7 @@ from federated_scvi_flower.data_utils_scvi import ensure_hvg_genes
 import scanpy as sc
 import os
 import pandas as pd
-from pytorch_lightning.callbacks import Callback
+from lightning.pytorch.callbacks import Callback
 
 def setup_scvi_anndata(adata, all_batches=None):
     adata.obs["batch"] = adata.obs.get("batch", adata.obs.get("tech", "batch0"))
@@ -54,30 +54,30 @@ def plot_latent_umap(adata, latent_key="X_scVI", color=["tech", "celltype"], sav
         sc.tl.umap(adata)
     sc.pl.umap(adata, color=color, save=save, show=show) 
 
-# TRAINING ALL EPOCHS TOGETHER IF YOU DON'T NEED TO TRACK LOSS
-# def train_scvi(model, adata, max_epochs=10):
-#     model.train(max_epochs=max_epochs)
-#     # Use .iloc[-1] to get the last value by position, not by index and Negate to get the true ELBO (should be negative, like model.get_elbo)
-#     return -float(model.history["elbo_train"].iloc[-1]) if "elbo_train" in model.history else 0.0
+# TRAINING ALL EPOCHS TOGETHER IF YOU DON'T NEED TO TRACK LOSS, FEDERATED APPROACH
+def train_scvi(model, adata, max_epochs=10):
+    model.train(max_epochs=max_epochs)
+    # Use .iloc[-1] to get the last value by position, not by index and Negate to get the true ELBO (should be negative, like model.get_elbo)
+    return -float(model.history["elbo_train"].iloc[-1]) if "elbo_train" in model.history else 0.0
 
 # TRAINING WITH LOSS TRACKING BUT UNEFFICIENT (NO CALLBACK)
-def train_scvi(model, adata_train, adata_test, max_epochs=10):
-    train_losses = []
-    test_losses = []
-    for epoch in range(max_epochs):
-        model.train(max_epochs=1)  # Train one epoch at a time
+# def train_scvi_tracking(model, adata_train, adata_test, max_epochs=10):
+#     train_losses = []
+#     test_losses = []
+#     for epoch in range(max_epochs):
+#         model.train(max_epochs=1)  # Train one epoch at a time
         
-        # Evaluate training loss
-        train_loss = evaluate_scvi(model, adata_train)
-        train_losses.append(train_loss)
+#         # Evaluate training loss
+#         train_loss = evaluate_scvi(model, adata_train)
+#         train_losses.append(train_loss)
         
-        # Evaluate test loss
-        test_loss = evaluate_scvi(model, adata_test)
-        test_losses.append(test_loss)
+#         # Evaluate test loss
+#         test_loss = evaluate_scvi(model, adata_test)
+#         test_losses.append(test_loss)
         
-        print(f"Epoch {epoch + 1}/{max_epochs} - Train loss: {train_loss}, Test loss: {test_loss}")
+#         print(f"Epoch {epoch + 1}/{max_epochs} - Train loss: {train_loss}, Test loss: {test_loss}")
         
-    return train_losses, test_losses
+#     return train_losses, test_losses
 
 class SCVILossLogger(Callback):
     def __init__(self, model, adata_train, adata_test):
@@ -87,7 +87,7 @@ class SCVILossLogger(Callback):
         self.train_losses = []
         self.test_losses = []
 
-    def on_epoch_end(self, trainer, pl_module):
+    def on_train_epoch_end(self, trainer, pl_module):
         train_loss = evaluate_scvi(self.model, self.adata_train)
         test_loss = evaluate_scvi(self.model, self.adata_test)
         self.train_losses.append(train_loss)

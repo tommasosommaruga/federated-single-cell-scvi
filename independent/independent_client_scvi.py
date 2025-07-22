@@ -25,7 +25,7 @@ sns.set_theme()
 
 print("Last run with scvi-tools version:", scvi.__version__)
 num_partitions = 3
-partition_id = 2
+partition_id = 0
 
 # Directories
 save_dir = "data"
@@ -66,7 +66,7 @@ else:
     scvi_model.save(model_dir, overwrite=True)
 
     # Save loss curves
-    loss_log_path = os.path.join(save_dir, f"loss_curve_client_{partition_id}.csv")
+    loss_log_path = os.path.join("loss_logs", f"loss_curve_client_{partition_id}.csv")
     loss_df = pd.DataFrame({
         "epoch": list(range(1, len(train_losses) + 1)),
         "train_loss": train_losses,
