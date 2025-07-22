@@ -186,3 +186,8 @@ cython_debug/
 /scvi-tools
 data/pancreas.h5ad
 federated_scvi_flower/final_server_model_adata.h5ad
+data/data_random_split/pancreas_test.h5ad
+data/data_random_split/pancreas_train.h5ad
+data/pancreas_test.h5ad
+data/pancreas_train.h5ad
+data/pancreas_val.h5ad

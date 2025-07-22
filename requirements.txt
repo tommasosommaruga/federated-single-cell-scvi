@@ -1,5 +1,9 @@
+# pip install -U scvi-tools[cuda] # still not working with cuda 12.4
+
+# ----------------------------------------------------------
+# python version == 3.11.13
 --extra-index-url https://download.pytorch.org/whl/cu124
-#python version == 3.11.13
+#  pip install -U "flwr[simulation]" # probably needed for ray
 numpy==2.1.2
 pandas==2.2.2
 seaborn==0.13.2
@@ -10,5 +14,6 @@ matplotlib==3.10.0
 scanpy==1.11.3
 igraph==0.11.9
 leidenalg
-#pip install --user scikit-misc
 toml
+flwr
+#pip install --user scikit-misc # should be already installed

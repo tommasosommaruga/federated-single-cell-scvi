@@ -3,30 +3,24 @@ import torch
 import numpy as np
 from federated_scvi_flower.data_utils_scvi import ensure_hvg_genes
 import scanpy as sc
+import os
+import pandas as pd
+from pytorch_lightning.callbacks import Callback
+
+def setup_scvi_anndata(adata, all_batches=None):
+    adata.obs["batch"] = adata.obs.get("batch", adata.obs.get("tech", "batch0"))
+    
+    if all_batches is not None: adata.obs["batch"] = pd.Categorical(adata.obs["batch"], categories=all_batches)
+    else: adata.obs["batch"] = adata.obs["batch"].astype("category")
+
+    # Mark all genes as highly variable if that info is present
+    if "highly_variable" in adata.var.columns: adata.var["highly_variable"] = True
+    scvi.model.SCVI.setup_anndata(adata, batch_key="batch", layer="counts")
 
 def get_scvi_model(adata, hvg_list=None, partition_id=None):
-    if hvg_list is not None:
-        adata = ensure_hvg_genes(adata, hvg_list, partition_id=partition_id)
-    # Remove or comment out repetitive debug prints
-    # print(f"[DEBUG][partition {partition_id}] HVG list length: {len(hvg_list)}, first 20: {hvg_list[:20]}")
-    # print(f"[DEBUG][partition {partition_id}] AnnData var_names length: {len(adata.var_names)}, first 20: {list(adata.var_names[:20])}")
-    # print(f"[DEBUG][partition {partition_id}] Genes in HVG list but not in AnnData: {set(hvg_list) - set(adata.var_names)}")
-    # print(f"[DEBUG][partition {partition_id}] Genes in AnnData but not in HVG list: {set(adata.var_names) - set(hvg_list)}")
-    # FATAL CHECK: Ensure adata.var_names matches hvg_list exactly
     if hvg_list is not None and list(adata.var_names) != list(hvg_list):
-        print(f"[FATAL][partition {partition_id}] adata.var_names and hvg_list do not match!")
-        print(f"adata.var_names[:20]: {list(adata.var_names[:20])}")
-        print(f"hvg_list[:20]: {hvg_list[:20]}")
-        print(f"adata.var_names length: {len(adata.var_names)}, hvg_list length: {len(hvg_list)}")
         raise ValueError("Gene list mismatch between AnnData and HVG list")
-    # Check and fix highly_variable column
-    if 'highly_variable' in adata.var.columns:
-        adata.var['highly_variable'] = True
-    # Ensure 'batch' column exists in adata.obs
-    if "batch" not in adata.obs:
-        adata.obs["batch"] = adata.obs["tech"] if "tech" in adata.obs else "batch0"
-    scvi.model.SCVI.setup_anndata(adata, batch_key="batch", layer="counts")
-    model = scvi.model.SCVI(adata)
+    model = scvi.model.SCVI(adata, use_layer_norm="both", use_batch_norm="none", encode_covariates=True, dropout_rate=0.2, n_layers=2)
     return model
 
 def get_weights(model):
@@ -38,11 +32,6 @@ def set_weights(model, weights):
     new_state_dict = {k: torch.tensor(w) for k, w in zip(state_dict.keys(), weights)}
     model.module.load_state_dict(new_state_dict, strict=True)
 
-def train_scvi(model, adata, max_epochs=10):
-    model.train(max_epochs=max_epochs)
-    # Use .iloc[-1] to get the last value by position, not by index and Negate to get the true ELBO (should be negative, like model.get_elbo)
-    return -float(model.history["elbo_train"].iloc[-1]) if "elbo_train" in model.history else 0.0
-
 def evaluate_scvi(model, adata):
     # Ensure 'batch' exists in adata.obs for evaluation
     if "batch" not in adata.obs:
@@ -52,7 +41,6 @@ def evaluate_scvi(model, adata):
     return float(elbo)
 
 def plot_latent_umap(adata, latent_key="X_scVI", color=["tech", "celltype"], save=None, show=True):
-    import os
     # Ensure directory exists if saving
     if save is not None:
         dirpath = os.path.dirname(os.path.abspath(save))
@@ -62,5 +50,52 @@ def plot_latent_umap(adata, latent_key="X_scVI", color=["tech", "celltype"], sav
     # Compute neighbors and UMAP if not already present
     if "X_umap" not in adata.obsm:
         sc.pp.neighbors(adata, use_rep=latent_key)
+        sc.tl.leiden(adata, flavor="igraph", n_iterations=2)
         sc.tl.umap(adata)
     sc.pl.umap(adata, color=color, save=save, show=show) 
+
+# TRAINING ALL EPOCHS TOGETHER IF YOU DON'T NEED TO TRACK LOSS
+# def train_scvi(model, adata, max_epochs=10):
+#     model.train(max_epochs=max_epochs)
+#     # Use .iloc[-1] to get the last value by position, not by index and Negate to get the true ELBO (should be negative, like model.get_elbo)
+#     return -float(model.history["elbo_train"].iloc[-1]) if "elbo_train" in model.history else 0.0
+
+# TRAINING WITH LOSS TRACKING BUT UNEFFICIENT (NO CALLBACK)
+def train_scvi(model, adata_train, adata_test, max_epochs=10):
+    train_losses = []
+    test_losses = []
+    for epoch in range(max_epochs):
+        model.train(max_epochs=1)  # Train one epoch at a time
+        
+        # Evaluate training loss
+        train_loss = evaluate_scvi(model, adata_train)
+        train_losses.append(train_loss)
+        
+        # Evaluate test loss
+        test_loss = evaluate_scvi(model, adata_test)
+        test_losses.append(test_loss)
+        
+        print(f"Epoch {epoch + 1}/{max_epochs} - Train loss: {train_loss}, Test loss: {test_loss}")
+        
+    return train_losses, test_losses
+
+class SCVILossLogger(Callback):
+    def __init__(self, model, adata_train, adata_test):
+        self.model = model
+        self.adata_train = adata_train
+        self.adata_test = adata_test
+        self.train_losses = []
+        self.test_losses = []
+
+    def on_epoch_end(self, trainer, pl_module):
+        train_loss = evaluate_scvi(self.model, self.adata_train)
+        test_loss = evaluate_scvi(self.model, self.adata_test)
+        self.train_losses.append(train_loss)
+        self.test_losses.append(test_loss)
+        print(f"Epoch {trainer.current_epoch + 1} - Train loss: {train_loss:.2f}, Test loss: {test_loss:.2f}")
+
+# Training function
+def train_scvi_with_loss_tracking(model, adata_train, adata_test, max_epochs=100):
+    loss_logger = SCVILossLogger(model, adata_train, adata_test)
+    model.train(max_epochs=max_epochs, callbacks=[loss_logger])
+    return loss_logger.train_losses, loss_logger.test_losses

@@ -3,15 +3,16 @@ import anndata
 import json
 import os
 
-adata_path = os.path.join('data', 'pancreas.h5ad')
+# Use only the train set for HVG selection
+adata_path = os.path.join('data', 'pancreas_train.h5ad')
 hvg_path = os.path.join('data', 'hvg_list.json')
 
-print(f'Loading AnnData from {adata_path}...')
+print(f'Loading train AnnData from {adata_path}...')
 adata = sc.read_h5ad(adata_path)
 # Convert counts layer to int32 if present
 if hasattr(adata, 'layers') and 'counts' in adata.layers:
     adata.layers['counts'] = adata.layers['counts'].astype('int32')
-print(f'Loaded AnnData with {adata.n_obs} cells and {adata.n_vars} genes.')
+print(f'Loaded train AnnData with {adata.n_obs} cells and {adata.n_vars} genes.')
 
 # Filter reference data as in server_scvi.py
 ref_mask = (~adata.obs["tech"].isin(["smartseq2", "celseq2"])).values
