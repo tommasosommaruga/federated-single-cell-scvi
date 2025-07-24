@@ -10,7 +10,7 @@ import seaborn as sns
 import torch
 import sys
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-
+from plot_result_2_0 import generate_scvi_umap
 from federated_scvi_flower.data_utils_scvi import load_batch_list, ensure_hvg_genes, load_hvg_list
 from federated_scvi_flower.model_utils_scvi import get_scvi_model, train_scvi_with_loss_tracking, evaluate_scvi, setup_scvi_anndata
 
@@ -73,25 +73,34 @@ else:
     loss_df.to_csv(loss_log_path, index=False)
     print(f"[centralised] Train and test loss per epoch saved to {loss_log_path}")
 
-
-# Store latent representation
-SCVI_LATENT_KEY = "X_scVI"
-adata.obsm[SCVI_LATENT_KEY] = scvi_ref.get_latent_representation()
-
 save_dir = "figures/centralised"
 os.makedirs(save_dir, exist_ok=True)
 sc.settings.figdir = save_dir
 
-# Run clustering and UMAP
-sc.pp.neighbors(adata, use_rep=SCVI_LATENT_KEY)
-sc.tl.leiden(adata, flavor="igraph", n_iterations=2)
-sc.tl.umap(adata)
+# Old code for UMAP plotting
+# # Store latent representation
+# SCVI_LATENT_KEY = "X_scVI"
+# adata.obsm[SCVI_LATENT_KEY] = scvi_ref.get_latent_representation()
 
-# Plot and save UMAP
-sc.pl.umap(
-    adata,
-    color=["tech", "celltype"],
-    frameon=False,
-    show=False,         # Do not display plot in window
-    save="_plot.png"    # Will save under `figures/umap_plot.png` by default
+# # Run clustering and UMAP
+# sc.pp.neighbors(adata, use_rep=SCVI_LATENT_KEY)
+# sc.tl.leiden(adata, flavor="igraph", n_iterations=2)
+# sc.tl.umap(adata)
+
+# # Plot and save UMAP
+# sc.pl.umap(
+#     adata,
+#     color=["tech", "celltype"],
+#     frameon=False,
+#     show=False,         # Do not display plot in window
+#     save="_plot.png"    # Will save under `figures/umap_plot.png` by default
+# )
+
+generate_scvi_umap(
+    adata_train=adata,
+    adata_test=adata_test,
+    model_weights_path=model_dir,
+    save_dir=save_dir,
+    plot_type="centralised",
+    show_plot=False
 )

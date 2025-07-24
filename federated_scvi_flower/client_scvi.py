@@ -63,7 +63,8 @@ def client_fn(context: Context):
     # Assign batch info from 'tech' for train and test
     adata_train.obs['batch'] = adata_train.obs['tech']
     adata_test.obs['batch'] = adata_test.obs['tech']
-
+    print(f"Client {partition_id} - Training data shape: {adata_train.shape}, Test data shape: {adata_test.shape}")
+    print(f"Client {partition_id} - Batches in train: {adata_train.obs['batch'].unique()}, test: {adata_test.obs['batch'].unique()}")
     # Load all batch categories (for consistent batch handling)
     all_batches = load_batch_list(batch_list_path)
 

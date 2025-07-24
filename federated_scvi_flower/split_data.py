@@ -23,6 +23,7 @@ def stratified_split(adata, ratios):
     """Stratified split by 'tech' or random if no 'tech'."""
     train_idx, val_idx, test_idx = [], [], []
     if "tech" in adata.obs:
+        print("Using the stratified_split function with 'tech' stratification.")
         for tech in adata.obs["tech"].unique():
             idx = np.where(adata.obs["tech"] == tech)[0]
             n = len(idx)
@@ -34,6 +35,7 @@ def stratified_split(adata, ratios):
                 val_idx.extend(perm[n_train:n_train+n_val])
             test_idx.extend(perm[n_train+n_val:] if n_val else perm[n_train:])
     else:
+        print("Using the random split")
         n = adata.n_obs
         n_train = int(ratios[0]*n)
         n_val = int(ratios[1]*n) if len(ratios) > 1 else 0

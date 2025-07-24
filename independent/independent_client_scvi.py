@@ -13,6 +13,7 @@ import logging
 
 # Project-specific modules
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+from plot_result_2_0 import generate_scvi_umap
 from federated_scvi_flower.data_utils_scvi import load_partitioned_anndata, ensure_hvg_genes, load_hvg_list, load_batch_list
 from federated_scvi_flower.model_utils_scvi import train_scvi_with_loss_tracking, get_scvi_model, evaluate_scvi, setup_scvi_anndata
 
@@ -25,7 +26,7 @@ sns.set_theme()
 
 print("Last run with scvi-tools version:", scvi.__version__)
 num_partitions = 3
-partition_id = 0
+partition_id = 1
 
 # Directories
 save_dir = "data"
@@ -75,20 +76,32 @@ else:
     loss_df.to_csv(loss_log_path, index=False)
     print(f"[independent_client_{partition_id}] Loss curve saved to {loss_log_path}")
 
-# Latent representation + plotting
-adata.obsm["X_scVI"] = scvi_model.get_latent_representation()
-sc.settings.figdir = f"figures/independent_client_{partition_id}"
-os.makedirs(sc.settings.figdir, exist_ok=True)
+save_dir = f"figures/independent_client_{partition_id}"
+os.makedirs(save_dir, exist_ok=True)
 
-sc.pp.neighbors(adata, use_rep="X_scVI")
-sc.tl.leiden(adata, flavor="igraph", n_iterations=2)
-sc.tl.umap(adata)
+# Old code for UMAP plotting
+# adata.obsm["X_scVI"] = scvi_model.get_latent_representation()
 
-sc.pl.umap(
-    adata,
-    color=["tech", "celltype"],
-    frameon=False,
-    show=False,
-    save=f"_client_{partition_id}_plot.png"
+# sc.settings.figdir = f"figures/independent_client_{partition_id}"
+# os.makedirs(sc.settings.figdir, exist_ok=True)
+
+# sc.pp.neighbors(adata, use_rep="X_scVI")
+# sc.tl.leiden(adata, flavor="igraph", n_iterations=2)
+# sc.tl.umap(adata)
+
+# sc.pl.umap(
+#     adata,
+#     color=["tech", "celltype"],
+#     frameon=False,
+#     show=False,
+#     save=f"_client_{partition_id}_plot.png"
+# )
+
+generate_scvi_umap(
+    adata_train=adata,
+    adata_test=adata_test,
+    model_weights_path=model_dir,
+    save_dir=save_dir,
+    plot_type=f"independent_client_{partition_id}",
+    show_plot=False
 )
-
