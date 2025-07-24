@@ -1,5 +1,5 @@
 # Tesi-scvi
-
+Pancreas data folder: https://figshare.com/ndownloader/files/24539828
 Colorare in base al client sullo umap
 provare anche n client per n tech
 2000 geni più espressi federato
