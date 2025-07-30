@@ -4,8 +4,8 @@ import anndata
 import scanpy as sc
 from flwr.client import ClientApp
 from flwr.common import Context
-from federated_scvi_flower.data_utils_scvi import load_batch_list, load_partitioned_anndata, ensure_hvg_genes, load_hvg_list
-from federated_scvi_flower.model_utils_scvi import get_scvi_model, setup_scvi_anndata, get_weights, set_weights, train_scvi, evaluate_scvi
+from federated_scvi_flower.utils.data_utils_scvi import load_batch_list, load_partitioned_anndata, ensure_hvg_genes, load_hvg_list
+from federated_scvi_flower.utils.model_utils_scvi import get_scvi_model, setup_scvi_anndata, get_weights, set_weights, train_scvi, evaluate_scvi
 import os
 
 class ScviClient(fl.client.NumPyClient):
@@ -44,7 +44,7 @@ class ScviClient(fl.client.NumPyClient):
         return float(test_loss), self.adata_test.n_obs, {"test_loss": test_loss}
 
 def client_fn(context: Context):
-    hvg_list_path = context.run_config.get("hvg_list_path", "data/hvg_list.json")
+    hvg_list_path = context.run_config.get("hvg_list_path", "data/report_models/hvg_list.json")
     batch_list_path = context.run_config.get("batch_list_path", "data/batch_list.json")
 
     partition_id = context.node_config["partition-id"]
@@ -58,6 +58,7 @@ def client_fn(context: Context):
     
     # Load HVG list and ensure genes in test set
     hvg_list = load_hvg_list(hvg_list_path)
+    adata_train = ensure_hvg_genes(adata_train, hvg_list, partition_id=partition_id)
     adata_test = ensure_hvg_genes(adata_test, hvg_list)
 
     # Assign batch info from 'tech' for train and test

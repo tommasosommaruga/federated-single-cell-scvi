@@ -30,9 +30,9 @@ clientapp = "federated_scvi_flower.client_scvi:app"
 [tool.flwr.app.config]
 # Defines the number of clients to simulate.
 num_clients = 3
-num_rounds = 40
+num_rounds = 34
 local-epochs = 3
-hvg_list_path = "data/hvg_list.json"
+hvg_list_path = "data/report_models/hvg_list.json"
 batch_list_path = "data/batch_list.json"
 adata_test_path = "data/pancreas_test.h5ad"
 

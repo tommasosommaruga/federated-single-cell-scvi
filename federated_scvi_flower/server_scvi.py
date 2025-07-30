@@ -1,13 +1,14 @@
 from flwr.server import ServerApp, ServerAppComponents, ServerConfig
 from flwr.server.strategy import FedAvg
 from flwr.common import Context, ndarrays_to_parameters, parameters_to_ndarrays, Parameters
-from federated_scvi_flower.model_utils_scvi import get_scvi_model, get_weights, set_weights, setup_scvi_anndata, evaluate_scvi
+from federated_scvi_flower.utils.model_utils_scvi import get_scvi_model, get_weights, set_weights, setup_scvi_anndata, evaluate_scvi
 import os
 import csv
 import torch
-from federated_scvi_flower.data_utils_scvi import ensure_hvg_genes, create_dummy_adata, load_batch_list, load_hvg_list
+from federated_scvi_flower.utils.data_utils_scvi import ensure_hvg_genes, create_dummy_adata, load_batch_list, load_hvg_list
 import atexit
 import anndata as ad
+from plot_umap import generate_scvi_umap
 
 model = None
 adata_ref = None
@@ -58,7 +59,7 @@ def server_fn(context: Context) -> ServerAppComponents:
     print(f"[server_scvi] num_clients: {num_clients}, context.run_config: {context.run_config}")
 
     # Load HVG list and batch list
-    hvg_list_path = context.run_config.get("hvg_list_path", "data/hvg_list.json")
+    hvg_list_path = context.run_config.get("hvg_list_path", "data/report_models/hvg_list.json")
     batch_list_path = context.run_config.get("batch_list_path", "data/batch_list.json")
     hvg_list = load_hvg_list(hvg_list_path)
     batch_list = load_batch_list(batch_list_path)
@@ -112,7 +113,7 @@ def save_final_model_and_adata(model, path_prefix="federated_scvi_flower/final_s
     print(f"Saved final model to {model_path}")
 
 def _save_on_exit():
-    global model, adata_ref, global_strategy
+    global model, adata_ref, global_strategy, adata_test
     try:
         if model is not None and adata_ref is not None and global_strategy is not None:
             final_parameters = global_strategy.final_parameters
