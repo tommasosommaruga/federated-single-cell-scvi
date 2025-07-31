@@ -191,3 +191,5 @@ data/data_random_split/pancreas_train.h5ad
 data/pancreas_test.h5ad
 data/pancreas_train.h5ad
 data/pancreas_val.h5ad
+data/**/*.h5ad
+

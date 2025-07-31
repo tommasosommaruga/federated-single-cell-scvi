@@ -72,7 +72,7 @@ def main(grid: Grid, context: Context) -> None:
     idx_to_name = get_gene_index_name_dict("data/pancreas_train.h5ad")
     hvg_list = sorted([idx_to_name[i] for i in sorted_indices])
 
-    with open("data/report_models/hvg_list.json", "w") as f:
+    with open("data/hvg_list.json", "w") as f:
         json.dump(hvg_list, f)
     
     log(INFO, "")

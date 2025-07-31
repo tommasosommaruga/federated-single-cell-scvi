@@ -38,7 +38,7 @@ def evaluate_scvi(model, adata):
         adata.obs["batch"] = adata.obs["tech"] if "tech" in adata.obs else "batch0"
     # Evaluate ELBO on the given AnnData
     elbo = model.get_elbo(adata)
-    return float(elbo)
+    return -float(elbo)
 
 def plot_latent_umap(adata, latent_key="X_scVI", color=["tech", "celltype"], save=None, show=True):
     # Ensure directory exists if saving
@@ -58,7 +58,7 @@ def plot_latent_umap(adata, latent_key="X_scVI", color=["tech", "celltype"], sav
 def train_scvi(model, adata, max_epochs=10):
     model.train(max_epochs=max_epochs)
     # Use .iloc[-1] to get the last value by position, not by index and Negate to get the true ELBO (should be negative, like model.get_elbo)
-    return -float(model.history["elbo_train"].iloc[-1]) if "elbo_train" in model.history else 0.0
+    return float(model.history["elbo_train"].iloc[-1]) if "elbo_train" in model.history else 0.0
 
 # TRAINING WITH LOSS TRACKING BUT UNEFFICIENT (NO CALLBACK)
 # def train_scvi_tracking(model, adata_train, adata_test, max_epochs=10):

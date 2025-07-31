@@ -12,9 +12,10 @@ from federated_scvi_flower.utils.data_utils_scvi import ensure_hvg_genes, load_b
 # Load train/test data and HVG list
 adata_train = anndata.read_h5ad("data/pancreas_train.h5ad")
 adata_test = anndata.read_h5ad("data/pancreas_test.h5ad")
-with open("data/report_models/hvg_list.json") as f:
+with open("data/hvg_list.json") as f:
     hvg_list = json.load(f)
-
+name_prefix = "3_clients_34_rounds_3_epochs"
+model_name = f"federated_scvi_flower/models/{name_prefix}/model.pt"
 # Ensure HVG genes are consistent between train and test
 adata_train = ensure_hvg_genes(adata_train, hvg_list)
 adata_test = ensure_hvg_genes(adata_test, hvg_list)
@@ -34,7 +35,7 @@ setup_scvi_anndata(adata_test, all_batches=all_batches)
 model = get_scvi_model(adata_train, hvg_list)
 
 # Load saved model weights (handle DataParallel wrapping if present)
-state_dict = torch.load("federated_scvi_flower/final_server_model.pt")
+state_dict = torch.load(model_name)
 if hasattr(model, "module"):
     model.module.load_state_dict(state_dict, strict=True)
 else:
@@ -64,18 +65,34 @@ os.makedirs(save_dir, exist_ok=True)
 sc.settings.figdir = save_dir
 
 # Compute neighbors and UMAP on latent space
+sc.pp.neighbors(adata_test, use_rep="X_scVI")
+sc.tl.umap(adata_test)
+
+# Plot UMAP colored by dataset, technology, and cell type
+fig, axes = plt.subplots(1, 2, figsize=(21, 6))
+
+sc.pl.umap(adata_test, color="tech", ax=axes[0], show=False, title="UMAP by Technology (TEST)")
+sc.pl.umap(adata_test, color="celltype", ax=axes[1], show=False, title="UMAP by Cell Type (TEST)")
+
+# Save figure
+fig.tight_layout()
+fig.savefig(os.path.join(save_dir, f"combined_umap_comparison_test_{name_prefix}.png"))
+plt.close(fig)
+print(f'File combined_umap_comparison_test_{name_prefix}.png saved in the {save_dir} folder!')
+
+# Compute neighbors and UMAP on latent space
 sc.pp.neighbors(adata_combined, use_rep="X_scVI")
 sc.tl.umap(adata_combined)
 
-# Plot UMAP colored by dataset, technology, and cell type
+# Plot and save
 fig, axes = plt.subplots(1, 3, figsize=(21, 6))
-
 sc.pl.umap(adata_combined, color="dataset", ax=axes[0], show=False, title="UMAP by Dataset")
 sc.pl.umap(adata_combined, color="tech", ax=axes[1], show=False, title="UMAP by Technology")
 sc.pl.umap(adata_combined, color="celltype", ax=axes[2], show=False, title="UMAP by Cell Type")
 
 # Save figure
 fig.tight_layout()
-fig.savefig(os.path.join(save_dir, "combined_umap_comparison.png"))
+fig.savefig(os.path.join(save_dir, f"combined_umap_comparison_{name_prefix}.png"))
 plt.close(fig)
-print(f'File combined_umap_comparison.png saved in the {save_dir} folder!')
+print(f'File combined_umap_comparison_{name_prefix}.png saved in the {save_dir} folder!')
+

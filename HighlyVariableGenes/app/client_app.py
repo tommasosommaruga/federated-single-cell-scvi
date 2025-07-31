@@ -22,6 +22,7 @@ class FlowerClient(NumPyClient):
         self.data = data
         self.partition_id = partition_id
         
+    # PRENDERE VARIANZA DEL GENE PER OGNI CLIENT POI AGGREGARE
     def fit(self, parameters, config):
         # Compute HVGs but do NOT subset, keep dispersions_norm
         sc.pp.highly_variable_genes(self.data, n_top_genes=2000, subset=False)

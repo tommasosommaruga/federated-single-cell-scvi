@@ -26,12 +26,12 @@ sns.set_theme()
 
 print("Last run with scvi-tools version:", scvi.__version__)
 num_partitions = 3
-partition_id = 2
+partition_id = 1
 
 # Directories
 save_dir = "data"
-model_dir = os.path.join(save_dir, f"independent_client_{partition_id}")
-hvg_path = os.path.join(save_dir, "report_models/hvg_list.json")
+model_dir = os.path.join('models', f"independent_client_{partition_id}")
+hvg_path = os.path.join(save_dir, "hvg_list.json")
 batch_list_path = os.path.join(save_dir, "batch_list.json")
 
 # Load data
@@ -105,4 +105,14 @@ generate_scvi_umap(
     save_dir=save_dir,
     plot_type=f"independent_client_{partition_id}",
     show_plot=False
+)
+
+generate_scvi_umap(
+    adata_train=adata,
+    adata_test=adata_test,
+    model_weights_path=model_dir,
+    save_dir=save_dir,
+    plot_type=f"independent_client_{partition_id}_test",
+    show_plot=False,
+    data_combined=False
 )

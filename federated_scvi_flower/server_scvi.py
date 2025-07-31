@@ -39,7 +39,7 @@ class FedAvgWithEval(FedAvg):
         return aggregated_result
 
     def log_to_csv(self, round_number, loss_value):
-        log_path = os.path.join("loss_logs","loss_curve_federated.csv")
+        log_path = os.path.join("loss_logs",f"loss_curve_federated_{num_clients}_clients_{num_rounds}_rounds_{epochs}_epochs.csv")
         os.makedirs(os.path.dirname(log_path), exist_ok=True)
         file_exists = os.path.isfile(log_path)
 
@@ -50,7 +50,7 @@ class FedAvgWithEval(FedAvg):
             writer.writerow([round_number, loss_value])
 
 def server_fn(context: Context) -> ServerAppComponents:
-    global model, adata_ref, global_strategy, adata_test
+    global model, adata_ref, global_strategy, adata_test, num_clients, num_rounds, epochs
 
     num_clients = int(context.run_config.get("num_clients", 2))
     num_rounds = int(context.run_config.get("num_rounds", 3))
@@ -59,7 +59,7 @@ def server_fn(context: Context) -> ServerAppComponents:
     print(f"[server_scvi] num_clients: {num_clients}, context.run_config: {context.run_config}")
 
     # Load HVG list and batch list
-    hvg_list_path = context.run_config.get("hvg_list_path", "data/report_models/hvg_list.json")
+    hvg_list_path = context.run_config.get("hvg_list_path", "data/hvg_list.json")
     batch_list_path = context.run_config.get("batch_list_path", "data/batch_list.json")
     hvg_list = load_hvg_list(hvg_list_path)
     batch_list = load_batch_list(batch_list_path)
@@ -103,8 +103,10 @@ def server_fn(context: Context) -> ServerAppComponents:
 app = ServerApp(server_fn=server_fn)
 
 # Save final model weights
-def save_final_model_and_adata(model, path_prefix="federated_scvi_flower/final_server_model"):
-    model_path = f"{path_prefix}.pt"
+def save_final_model_and_adata(model):
+    model_path = f"federated_scvi_flower/models/{num_clients}_clients_{num_rounds}_rounds_{epochs}_epochs/model.pt"
+    # Ensure parent directory exists
+    os.makedirs(os.path.dirname(model_path), exist_ok=True)
     # Use model.state_dict() unless your model is wrapped in DataParallel
     if hasattr(model, "module"):
         torch.save(model.module.state_dict(), model_path)

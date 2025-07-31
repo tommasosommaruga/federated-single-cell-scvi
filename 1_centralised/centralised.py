@@ -29,15 +29,15 @@ sns.set_theme()
 torch.set_float32_matmul_precision("high")
 
 # Dataset location
-save_dir = "data"
-model_dir = os.path.join(save_dir, "centralised_trained_scvi_model")
+save_dir = "models"
+model_dir = os.path.join(save_dir, "centralised_model")
 # adata_path = os.path.join(save_dir, "pancreas.h5ad")
 # adata = sc.read(adata_path, backup_url="https://figshare.com/ndownloader/files/24539828",)
 
 adata = anndata.read_h5ad("data/pancreas_train.h5ad")
 adata_test = anndata.read_h5ad("data/pancreas_test.h5ad")
 
-hvg_list = load_hvg_list("data/report_models/hvg_list.json")
+hvg_list = load_hvg_list("data/hvg_list.json")
 adata = ensure_hvg_genes(adata, hvg_list)
 adata_test = ensure_hvg_genes(adata_test, hvg_list)
 all_batches = load_batch_list("data/batch_list.json")
@@ -103,4 +103,14 @@ generate_scvi_umap(
     save_dir=save_dir,
     plot_type="centralised",
     show_plot=False
+)
+
+generate_scvi_umap(
+    adata_train=adata,
+    adata_test=adata_test,
+    model_weights_path=model_dir,
+    save_dir=save_dir,
+    plot_type="centralised_test",
+    show_plot=False,
+    data_combined=False
 )

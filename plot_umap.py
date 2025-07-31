@@ -10,10 +10,10 @@ from federated_scvi_flower.utils.model_utils_scvi import get_scvi_model, setup_s
 from federated_scvi_flower.utils.data_utils_scvi import ensure_hvg_genes, load_batch_list, load_hvg_list
 
 
-def generate_scvi_umap(adata_train: anndata.AnnData = None, adata_test: anndata.AnnData = None,
-                        hvg_path: str = "data/report_models/hvg_list.json", batch_list_path: str = "data/batch_list.json", 
+def generate_scvi_umap(adata_train: anndata.AnnData = None, adata_test: anndata.AnnData = None, 
                         model_weights_path: str = "federated_scvi_flower/final_server_model.pt", 
-                        save_dir: str = "umap/federated", show_plot: bool = False, plot_type: str = "federated"):
+                        save_dir: str = "umap/federated", show_plot: bool = False, plot_type: str = "federated",
+                        data_combined = True):
 
     # Load datasets if not provided
     if adata_train is None: adata_train = anndata.read_h5ad("data/pancreas_train.h5ad")
@@ -25,20 +25,22 @@ def generate_scvi_umap(adata_train: anndata.AnnData = None, adata_test: anndata.
     # Get latent embeddings
     adata_train.obsm["X_scVI"] = model.get_latent_representation()
     adata_test.obsm["X_scVI"] = model.get_latent_representation(adata_test)
+    adata_combined = adata_test.copy()
+    
+    if data_combined:
+        # Combine train and test data
+        adata_combined = anndata.concat(
+            [adata_train, adata_test],
+            label="dataset",
+            keys=["train", "test"],
+            join="inner",
+            index_unique=None,
+        )
 
-    # Combine train and test data
-    adata_combined = anndata.concat(
-        [adata_train, adata_test],
-        label="dataset",
-        keys=["train", "test"],
-        join="inner",
-        index_unique=None,
-    )
-
-    adata_combined.obsm["X_scVI"] = np.vstack([
-        adata_train.obsm["X_scVI"],
-        adata_test.obsm["X_scVI"]
-    ])
+        adata_combined.obsm["X_scVI"] = np.vstack([
+            adata_train.obsm["X_scVI"],
+            adata_test.obsm["X_scVI"]
+        ])
 
     # Make output folder
     os.makedirs(save_dir, exist_ok=True)
@@ -50,10 +52,17 @@ def generate_scvi_umap(adata_train: anndata.AnnData = None, adata_test: anndata.
     sc.tl.umap(adata_combined)
 
     # Plot and save
-    fig, axes = plt.subplots(1, 3, figsize=(21, 6))
-    sc.pl.umap(adata_combined, color="dataset", ax=axes[0], show=False, title="UMAP by Dataset")
-    sc.pl.umap(adata_combined, color="tech", ax=axes[1], show=False, title="UMAP by Technology")
-    sc.pl.umap(adata_combined, color="celltype", ax=axes[2], show=False, title="UMAP by Cell Type")
+    plot_index = 0
+    if "dataset" in adata_combined.obs.columns:
+        fig, axes = plt.subplots(1, 3, figsize=(21, 6))
+
+        sc.pl.umap(adata_combined, color="dataset", ax=axes[plot_index], show=False, title="UMAP by Dataset")
+        plot_index += 1
+    else:
+        fig, axes = plt.subplots(1, 2, figsize=(14, 6))
+    sc.pl.umap(adata_combined, color="tech", ax=axes[plot_index], show=False, title="UMAP by Technology")
+    plot_index += 1
+    sc.pl.umap(adata_combined, color="celltype", ax=axes[plot_index], show=False, title="UMAP by Cell Type")
 
     fig.tight_layout()
     file_path = os.path.join(save_dir, f"umap_comparison_{plot_type}.png")

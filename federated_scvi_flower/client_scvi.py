@@ -7,6 +7,7 @@ from flwr.common import Context
 from federated_scvi_flower.utils.data_utils_scvi import load_batch_list, load_partitioned_anndata, ensure_hvg_genes, load_hvg_list
 from federated_scvi_flower.utils.model_utils_scvi import get_scvi_model, setup_scvi_anndata, get_weights, set_weights, train_scvi, evaluate_scvi
 import os
+import gc
 
 class ScviClient(fl.client.NumPyClient):
     def __init__(self, adata, adata_test, client_id, hvg_list, all_batches):
@@ -34,6 +35,7 @@ class ScviClient(fl.client.NumPyClient):
         epochs = int(config.get("epochs", 5))
         train_loss = train_scvi(self.model, self.adata, max_epochs=epochs)
         self.train_loss = train_loss
+        gc.collect()
         return get_weights(self.model), self.adata.n_obs, {"train_loss": train_loss}
 
     def evaluate(self, parameters, config):
@@ -41,10 +43,11 @@ class ScviClient(fl.client.NumPyClient):
         # Evaluate on held-out test set
         test_loss = evaluate_scvi(self.model, self.adata_test)
         self.test_loss = test_loss
+        gc.collect()
         return float(test_loss), self.adata_test.n_obs, {"test_loss": test_loss}
 
 def client_fn(context: Context):
-    hvg_list_path = context.run_config.get("hvg_list_path", "data/report_models/hvg_list.json")
+    hvg_list_path = context.run_config.get("hvg_list_path", "data/hvg_list.json")
     batch_list_path = context.run_config.get("batch_list_path", "data/batch_list.json")
 
     partition_id = context.node_config["partition-id"]
@@ -64,8 +67,8 @@ def client_fn(context: Context):
     # Assign batch info from 'tech' for train and test
     adata_train.obs['batch'] = adata_train.obs['tech']
     adata_test.obs['batch'] = adata_test.obs['tech']
-    print(f"Client {partition_id} - Training data shape: {adata_train.shape}, Test data shape: {adata_test.shape}")
-    print(f"Client {partition_id} - Batches in train: {adata_train.obs['batch'].unique()}, test: {adata_test.obs['batch'].unique()}")
+    # print(f"Client {partition_id} - Training data shape: {adata_train.shape}, Test data shape: {adata_test.shape}")
+    # print(f"Client {partition_id} - Batches in train: {adata_train.obs['batch'].unique()}, test: {adata_test.obs['batch'].unique()}")
     # Load all batch categories (for consistent batch handling)
     all_batches = load_batch_list(batch_list_path)
 

@@ -5,7 +5,7 @@ import os
 
 # Use only the train set for HVG selection
 adata_path = os.path.join('data', 'pancreas_train.h5ad')
-hvg_path = os.path.join('data', 'report_models/hvg_list.json')
+hvg_path = os.path.join('data', 'hvg_list.json')
 
 print(f'Loading train AnnData from {adata_path}...')
 adata = sc.read_h5ad(adata_path)
