@@ -94,8 +94,8 @@ def plot_training_curves(csv_folder, loss_name, output_folder='plots', mode='com
             if model in color_map:
                 plt.plot(x_axes[model], train_losses[model], label=model, color=color_map[model])
         plt.xlabel('Epochs')
-        plt.ylabel('Train Loss')
-        plt.title('Train Loss Comparison')
+        plt.ylabel('Negative ELBO Train Loss')
+        plt.title('Negative ELBO Train Loss Comparison')
         if mode != 'compare_fed_scores':
             plt.legend()
         plt.tight_layout()
@@ -112,8 +112,8 @@ def plot_training_curves(csv_folder, loss_name, output_folder='plots', mode='com
                 else:
                     plt.plot(x_axes[model], test_losses[model], label=model, color=color_map[model])
         plt.xlabel('Epochs')
-        plt.ylabel('Test Loss')
-        plt.title('Test Loss Comparison')
+        plt.ylabel('Negative ELBO Test Loss')
+        plt.title('Negative ELBO Test Loss Comparison')
         #if mode != 'compare_fed_scores':
         plt.legend()
         plt.tight_layout()
