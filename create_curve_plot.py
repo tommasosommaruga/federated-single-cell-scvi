@@ -5,6 +5,7 @@ import toml
 import matplotlib.pyplot as plt
 import numpy as np
 import re
+import random
 
 def load_epochs_per_round(loss_name):
     match = re.search(r'(\d+)_epochs', loss_name)
@@ -12,7 +13,7 @@ def load_epochs_per_round(loss_name):
         return int(match.group(1))
     return None
     
-def plot_training_curves(csv_folder, loss_name, output_folder='plots', mode='compare_fed_scores', federated_loss_csv=None):
+def plot_training_curves(csv_folder, loss_name, output_folder='plots', mode='compare_fed_scores', federated_loss_csv=None, max_models=8):
     os.makedirs(output_folder, exist_ok=True)
     all_csv_files = glob.glob(os.path.join(csv_folder, '*.csv'))
     all_csv_files = sorted(all_csv_files)
@@ -37,8 +38,10 @@ def plot_training_curves(csv_folder, loss_name, output_folder='plots', mode='com
     csv_files = []
 
     if mode == 'compare_fed_scores':
-        # Only select files that contain "federated" in the filename
-        csv_files = [f for f in all_csv_files if 'federated' in os.path.basename(f).lower()]
+        federated_csvs = [f for f in all_csv_files if 'federated' in os.path.basename(f).lower()]
+        centralized_loss_csv = next(f for f in all_csv_files if 'centralised' in os.path.basename(f).lower())
+        selected_federated = random.sample(federated_csvs, k=min(len(federated_csvs), max_models - 1))
+        csv_files = selected_federated + [centralized_loss_csv]
 
     elif mode == 'compare_models':
         if federated_loss_csv is None or not os.path.exists(federated_loss_csv):
@@ -66,7 +69,7 @@ def plot_training_curves(csv_folder, loss_name, output_folder='plots', mode='com
             group_col = 'epoch'
         elif 'round' in df.columns:
             group_col = 'round'
-            df['epoch'] = df['round'] * epochs_per_round
+            df['epoch'] = np.minimum(df['round'] * epochs_per_round, 100)
             group_col = 'epoch'
         else:
             continue
@@ -85,14 +88,11 @@ def plot_training_curves(csv_folder, loss_name, output_folder='plots', mode='com
         color_map[model_name] = assign_color(model_name)
 
     # Plot train loss
-    if train_losses:
+    if mode != 'compare_fed_scores' and train_losses:
         plt.figure()
         for model in train_losses:
             if model in color_map:
-                if mode == 'compare_fed_scores':
-                    plt.plot(x_axes[model], train_losses[model], color=color_map[model], alpha=0.5)
-                else:
-                    plt.plot(x_axes[model], train_losses[model], label=model, color=color_map[model])
+                plt.plot(x_axes[model], train_losses[model], label=model, color=color_map[model])
         plt.xlabel('Epochs')
         plt.ylabel('Train Loss')
         plt.title('Train Loss Comparison')
@@ -108,14 +108,14 @@ def plot_training_curves(csv_folder, loss_name, output_folder='plots', mode='com
         for model in test_losses:
             if model in color_map:
                 if mode == 'compare_fed_scores':
-                    plt.plot(x_axes[model], test_losses[model], color=color_map[model], alpha=0.5)
+                    plt.plot(x_axes[model], test_losses[model], label=model, alpha=0.5) # color=color_map[model],
                 else:
                     plt.plot(x_axes[model], test_losses[model], label=model, color=color_map[model])
         plt.xlabel('Epochs')
         plt.ylabel('Test Loss')
         plt.title('Test Loss Comparison')
-        if mode != 'compare_fed_scores':
-            plt.legend()
+        #if mode != 'compare_fed_scores':
+        plt.legend()
         plt.tight_layout()
         plt.savefig(os.path.join(output_folder, 'test_loss_comparison.png'))
         plt.close()
@@ -129,7 +129,8 @@ if __name__ == "__main__":
         loss_name=name_curve,
         output_folder='loss_logs/compare_models_plot',
         mode='compare_models',
-        federated_loss_csv=f'loss_logs/{name_curve}.csv'
+        federated_loss_csv=f'loss_logs/{name_curve}.csv',
+        max_models=8
     )
     plot_training_curves(
         csv_folder='loss_logs',

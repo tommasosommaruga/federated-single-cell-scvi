@@ -8,6 +8,14 @@ from federated_scvi_flower.utils.data_utils_scvi import load_batch_list, load_pa
 from federated_scvi_flower.utils.model_utils_scvi import get_scvi_model, setup_scvi_anndata, get_weights, set_weights, train_scvi, evaluate_scvi
 import os
 import gc
+import random
+import torch
+
+SEED = 55
+os.environ["PYTHONHASHSEED"] = str(SEED)
+random.seed(SEED)
+np.random.seed(SEED)
+torch.use_deterministic_algorithms(True, warn_only=True)
 
 class ScviClient(fl.client.NumPyClient):
     def __init__(self, adata, adata_test, client_id, hvg_list, all_batches):
@@ -19,7 +27,6 @@ class ScviClient(fl.client.NumPyClient):
         setup_scvi_anndata(self.adata, all_batches=all_batches)
         setup_scvi_anndata(self.adata_test, all_batches=all_batches)
         
-        self.client_id = client_id
         self.model = get_scvi_model(self.adata, hvg_list, partition_id=self.client_id)
         self.train_loss = None
         self.test_loss = None

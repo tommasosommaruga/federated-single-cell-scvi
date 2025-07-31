@@ -9,6 +9,15 @@ from federated_scvi_flower.utils.data_utils_scvi import ensure_hvg_genes, create
 import atexit
 import anndata as ad
 from plot_umap import generate_scvi_umap
+import random
+import numpy as np
+import shutil
+
+SEED = 55
+os.environ["PYTHONHASHSEED"] = str(SEED)
+random.seed(SEED)
+np.random.seed(SEED)
+torch.use_deterministic_algorithms(True, warn_only=True)
 
 model = None
 adata_ref = None
@@ -35,7 +44,6 @@ class FedAvgWithEval(FedAvg):
                 loss = evaluate_scvi(model, adata_test)
                 print(f"[Server] Round {rnd} test loss: {loss:.4f}")
                 self.log_to_csv(rnd, loss)
-
         return aggregated_result
 
     def log_to_csv(self, round_number, loss_value):

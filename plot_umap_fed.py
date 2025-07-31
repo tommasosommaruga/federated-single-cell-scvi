@@ -14,7 +14,7 @@ adata_train = anndata.read_h5ad("data/pancreas_train.h5ad")
 adata_test = anndata.read_h5ad("data/pancreas_test.h5ad")
 with open("data/hvg_list.json") as f:
     hvg_list = json.load(f)
-name_prefix = "3_clients_34_rounds_3_epochs"
+name_prefix = "3_clients_20_rounds_5_epochs"
 model_name = f"federated_scvi_flower/models/{name_prefix}/model.pt"
 # Ensure HVG genes are consistent between train and test
 adata_train = ensure_hvg_genes(adata_train, hvg_list)
