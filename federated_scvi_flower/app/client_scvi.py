@@ -4,8 +4,8 @@ import anndata
 import scanpy as sc
 from flwr.client import ClientApp
 from flwr.common import Context
-from federated_scvi_flower.utils.data_utils_scvi import load_batch_list, load_partitioned_anndata, ensure_hvg_genes, load_hvg_list
-from federated_scvi_flower.utils.model_utils_scvi import get_scvi_model, setup_scvi_anndata, get_weights, set_weights, train_scvi, evaluate_scvi
+from app.utils.data_utils_scvi import load_batch_list, load_partitioned_anndata, ensure_hvg_genes, load_hvg_list
+from app.utils.model_utils_scvi import get_scvi_model, setup_scvi_anndata, get_weights, set_weights, train_scvi, evaluate_scvi
 import os
 import gc
 import random

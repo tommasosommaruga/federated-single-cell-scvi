@@ -1,7 +1,6 @@
 import scvi
 import torch
 import numpy as np
-from federated_scvi_flower.utils.data_utils_scvi import ensure_hvg_genes
 import scanpy as sc
 import os
 import pandas as pd

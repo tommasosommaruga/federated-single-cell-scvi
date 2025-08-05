@@ -24,8 +24,8 @@ packages = ["."]
 publisher = "tommaso-sommaruga"
 
 [tool.flwr.app.components]
-serverapp = "federated_scvi_flower.server_scvi:app"
-clientapp = "federated_scvi_flower.client_scvi:app"
+serverapp = "app.server_scvi:app"
+clientapp = "app.client_scvi:app"
 
 [tool.flwr.app.config]
 # Defines the number of clients to simulate.

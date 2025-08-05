@@ -1,17 +1,15 @@
 from flwr.server import ServerApp, ServerAppComponents, ServerConfig
 from flwr.server.strategy import FedAvg
 from flwr.common import Context, ndarrays_to_parameters, parameters_to_ndarrays, Parameters
-from federated_scvi_flower.utils.model_utils_scvi import get_scvi_model, get_weights, set_weights, setup_scvi_anndata, evaluate_scvi
+from app.utils.model_utils_scvi import get_scvi_model, get_weights, set_weights, setup_scvi_anndata, evaluate_scvi
+from app.utils.data_utils_scvi import ensure_hvg_genes, create_dummy_adata, load_batch_list, load_hvg_list
 import os
 import csv
 import torch
-from federated_scvi_flower.utils.data_utils_scvi import ensure_hvg_genes, create_dummy_adata, load_batch_list, load_hvg_list
 import atexit
 import anndata as ad
-from plot_umap import generate_scvi_umap
 import random
 import numpy as np
-import shutil
 
 SEED = 55
 os.environ["PYTHONHASHSEED"] = str(SEED)

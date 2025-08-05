@@ -1,56 +1,72 @@
 """HighlyVariableGenes: A Flower for highly variable genes detection."""
 
-from flwr.client import ClientApp, NumPyClient
-from flwr.client.mod import secaggplus_mod
-from flwr.common import Context
+import os
 import json
-from app.task import load_partitioned_anndata
+import random
 import numpy as np
 import scanpy as sc
-import os
-import random
 
+from flwr.client import ClientApp, NumPyClient
+from flwr.common import Context
+from app.task import load_partitioned_anndata
+
+# --- CONFIGURATION ---
 SEED = 55
 os.environ["PYTHONHASHSEED"] = str(SEED)
 random.seed(SEED)
 np.random.seed(SEED)
 
-class FlowerClient(NumPyClient):
 
-    def __init__(self, timeout, data, partition_id: int):
+class FlowerClient(NumPyClient):
+    """Flower client for calculating local gene statistics."""
+
+    def __init__(self, timeout: float, data: sc.AnnData, partition_id: int):
         self.timeout = timeout
         self.data = data
         self.partition_id = partition_id
-        
-    # PRENDERE VARIANZA DEL GENE PER OGNI CLIENT POI AGGREGARE
+    
     def fit(self, parameters, config):
-        # Compute HVGs but do NOT subset, keep dispersions_norm
-        sc.pp.highly_variable_genes(self.data, n_top_genes=2000, subset=False)
-        print(f"Client {self.partition_id}")
+        """
+        Computes and returns local statistics (mean and mean of squares)
+        for each gene. These are aligned to a global gene list.
+        """
+        # N_i: number of samples (cells) for this client
+        num_examples = self.data.n_obs
 
-        # Use dispersions_norm as continuous variability score
-        hvg_scores_local_unsorted = self.data.var["dispersions_norm"].values.astype(np.float32)
-
-        gene_to_score = dict(zip(self.data.var_names.tolist(), hvg_scores_local_unsorted))
-
+        # Get the global gene list from the server configuration
         gene_list_str = config.get("global_gene_list", "[]")
         global_gene_list = json.loads(gene_list_str)
+        
+        # Initialize arrays for local means and local means of squares
+        aligned_mean_scores = np.zeros(len(global_gene_list), dtype=np.float32)
+        aligned_mean_of_squares_scores = np.zeros(len(global_gene_list), dtype=np.float32)
 
-        aligned_scores = np.zeros(len(global_gene_list), dtype=np.float32)
-        for i, gene in enumerate(global_gene_list):
-            aligned_scores[i] = gene_to_score.get(gene, 0.0)
+        # Get the expression matrix, handling potential sparse format
+        X_matrix = self.data.X.A if hasattr(self.data.X, 'A') else self.data.X
+        gene_to_index = {gene: i for i, gene in enumerate(self.data.var_names)}
 
-        # Save for debugging
-        selected_genes_dict = {gene: float(score) for gene, score in zip(global_gene_list, aligned_scores) if score > 0}
-        with open(f"HighlyVariableGenes/check_hvg_fl/selected_genes_client{self.partition_id}.json", "w") as f:
-            json.dump(selected_genes_dict, f)
+        # Iterate through the global gene list to compute and align statistics
+        for i, global_gene in enumerate(global_gene_list):
+            if global_gene in gene_to_index:
+                local_index = gene_to_index[global_gene]
+                gene_expression = X_matrix[:, local_index]
+                
+                # Calculate local mean and local mean of squares for the gene
+                local_mean_gene = np.mean(gene_expression)
+                local_mean_of_squares_gene = np.mean(gene_expression ** 2)
+                
+                aligned_mean_scores[i] = local_mean_gene
+                aligned_mean_of_squares_scores[i] = local_mean_of_squares_gene
 
-        return [aligned_scores], len(self.data), {}
+        # Return the computed statistics as parameters and the number of examples
+        return [aligned_mean_scores, aligned_mean_of_squares_scores], num_examples, {}
 
     def get_properties(self, config):
+        """Returns the list of gene names available on this client."""
         return {"gene_names": self.data.var_names.tolist()}
 
 def client_fn(context: Context):
+    """Loads data and creates a FlowerClient instance."""
     timeout = context.run_config["timeout"]
     partition_id = context.node_config["partition-id"]
     num_partitions = context.node_config["num-partitions"]
@@ -59,7 +75,4 @@ def client_fn(context: Context):
 
 app = ClientApp(
     client_fn=client_fn,
-    mods=[
-        secaggplus_mod,
-    ],
 )

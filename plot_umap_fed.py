@@ -6,8 +6,8 @@ import os
 import matplotlib.pyplot as plt
 import scanpy as sc
 
-from federated_scvi_flower.utils.model_utils_scvi import get_scvi_model, setup_scvi_anndata
-from federated_scvi_flower.utils.data_utils_scvi import ensure_hvg_genes, load_batch_list
+from federated_scvi_flower.app.utils.model_utils_scvi import get_scvi_model, setup_scvi_anndata
+from federated_scvi_flower.app.utils.data_utils_scvi import ensure_hvg_genes, load_batch_list
 
 # Load train/test data and HVG list
 adata_train = anndata.read_h5ad("data/pancreas_train.h5ad")
