@@ -38,8 +38,10 @@ def ensure_hvg_genes(adata, hvg_list, partition_id=None):
     adata = adata[:, hvg_list].copy()
     return adata
 
-def load_partitioned_anndata(partition_id, num_partitions):
-    adata_path = os.path.join("data", "pancreas_train.h5ad")
+def load_partitioned_anndata(partition_id, num_partitions, prefix=None):
+    if not prefix:
+        prefix = "."
+    adata_path = os.path.join(prefix, "0_data", "pancreas_train.h5ad")
     adata = anndata.read_h5ad(adata_path)
     logging.info(f"[load_partitioned_anndata][partition {partition_id}] Loaded filtered AnnData: shape={adata.shape}, genes={list(adata.var_names[:10])}")
     

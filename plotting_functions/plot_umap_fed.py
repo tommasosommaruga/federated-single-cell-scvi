@@ -1,3 +1,4 @@
+import sys
 import anndata
 import numpy as np
 import json
@@ -5,17 +6,18 @@ import torch
 import os
 import matplotlib.pyplot as plt
 import scanpy as sc
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from federated_scvi_flower.app.utils.model_utils_scvi import get_scvi_model, setup_scvi_anndata
 from federated_scvi_flower.app.utils.data_utils_scvi import ensure_hvg_genes, load_batch_list
 
 # Load train/test data and HVG list
-adata_train = anndata.read_h5ad("data/pancreas_train.h5ad")
-adata_test = anndata.read_h5ad("data/pancreas_test.h5ad")
-with open("data/hvg_list.json") as f:
+adata_train = anndata.read_h5ad("0_data/pancreas_train.h5ad")
+adata_test = anndata.read_h5ad("0_data/pancreas_test.h5ad")
+with open("0_data/hvg_list.json") as f:
     hvg_list = json.load(f)
 name_prefix = "3_clients_20_rounds_5_epochs"
-model_name = f"federated_scvi_flower/models/{name_prefix}/model.pt"
+model_name = f"federated_scvi_flower/app/models/{name_prefix}/model.pt"
 # Ensure HVG genes are consistent between train and test
 adata_train = ensure_hvg_genes(adata_train, hvg_list)
 adata_test = ensure_hvg_genes(adata_test, hvg_list)
@@ -25,7 +27,7 @@ adata_train.obs["batch"] = adata_train.obs["tech"].astype("category")
 adata_test.obs["batch"] = adata_test.obs["tech"].astype("category")
 
 # Get all batches from train and test datasets to unify batch categories
-all_batches = load_batch_list("data/batch_list.json")
+all_batches = load_batch_list("0_data/batch_list.json")
 
 # Setup AnnData for scVI with unified batch categories
 setup_scvi_anndata(adata_train, all_batches=all_batches)

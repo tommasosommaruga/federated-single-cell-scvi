@@ -48,8 +48,8 @@ def aggregate_variances(server_round, results: List[Tuple], failures):
         return None, {}
 
     num_genes = len(local_means_list[0])
-    global_mean = np.zeros(num_genes, dtype=np.float32)
-    global_mean_of_squares = np.zeros(num_genes, dtype=np.float32)
+    global_mean = np.zeros(num_genes, dtype=np.float64)
+    global_mean_of_squares = np.zeros(num_genes, dtype=np.float64)
 
     for i, (local_means, local_mean_of_squares) in enumerate(zip(local_means_list, local_mean_of_squares_list)):
         weight = num_examples_list[i] / total_examples
@@ -91,7 +91,7 @@ def server_fn(context: Context) -> ServerAppComponents:
 
     # Initialize with a single dummy array of zeros for the initial parameters.
     # The dimensions should match the expected output.
-    initial_params_ndarrays = [np.zeros(len(global_gene_list), dtype=np.float32)]
+    initial_params_ndarrays = [np.zeros(len(global_gene_list), dtype=np.float64)]
     initial_params = ndarrays_to_parameters(initial_params_ndarrays)
 
     # --- STRATEGY SETUP ---
@@ -120,25 +120,23 @@ def _save_on_exit():
     if strategy and strategy.final_parameters:
         try:
             aggregated_variances = parameters_to_ndarrays(strategy.final_parameters)[0]
-            
-            # Select top 2000 genes by aggregated variance
-            top_2000_indices = np.argsort(aggregated_variances)[-2000:][::-1]
+            num_genes = len(aggregated_variances)
+
+            # Create a stable sorting key: first by variance (descending), then by index (ascending)
+            indices = np.arange(num_genes)
+            sorted_indices = indices[np.lexsort((indices, -aggregated_variances))]
+
+            # Select the top 2000 indices from the stable sorted list
+            top_2000_indices = sorted_indices[:2000]
+
+            # Now sort the final indices for consistent output format
             sorted_indices = sorted([int(i) for i in top_2000_indices])
-            
-            os.makedirs("HighlyVariableGenes", exist_ok=True)
-            
+
             with open("HighlyVariableGenes/hvg_indices.json", "w") as f:
                 json.dump(sorted_indices, f)
-            
-            # Assuming get_gene_index_name_dict can read the necessary data
-            idx_to_name = get_gene_index_name_dict("data/pancreas_train.h5ad")
-            hvg_list = sorted([idx_to_name[i] for i in sorted_indices])
-
-            with open("HighlyVariableGenes/hvg_list.json", "w") as f:
-                json.dump(hvg_list, f)
-            with open("data/hvg_list_from_fl.json", "w") as f:
-                json.dump(hvg_list, f)
-            log(INFO, "Successfully saved final HVG lists to 'HighlyVariableGenes/hvg_indices.json' and 'HighlyVariableGenes/hvg_list.json'")
+            with open("0_data/hvg_list_from_fl.json", "w") as f:
+                json.dump(sorted_indices, f)
+            log(INFO, "Successfully saved final HVG lists to 'HighlyVariableGenes/hvg_indices.json' and '0_data/hvg_list_from_fl.json'")
 
         except Exception as e:
             log(INFO, f"An error occurred while saving the final results: {e}")

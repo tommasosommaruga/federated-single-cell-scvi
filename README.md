@@ -5,7 +5,8 @@ inizio di agosto fine testing
 [ ] provare anche 1 client per ogni tech
 [ ] Early stopping (implementarlo sulle loss test, prendendo il 25esimo percentile essendo che farlo sul train diventa complicato aggregrare)
 non avendo early stopping mettiamo come num di epoche 100 per confrontare, per far vedere in modo chiaro l'andamento della loss alla modifica del numero di epoche
-[ ] 2000 geni più varianti federato
+[x] 2000 geni più varianti federato (NON è uguale, non ho incluso i batch come fa la funzione sc.pp.highly_variable_genes(pancreas_ref, n_top_genes=2000, batch_key="tech"))
+
 [ ] valutare con metriche la clusterizzazione -> tabella
 
 [x] riprodurre plot sul test (https://genomebiology.biomedcentral.com/articles/10.1186/s13059-025-03684-6) figura 3a. confronto tra solo umap. 

@@ -23,9 +23,9 @@ def save_batch_list(batches: List[str], out_path: str):
 
 if __name__ == "__main__":
     # Fix based on the data paths
-    train_path = "../data/pancreas_train.h5ad"
-    test_path = "../data/pancreas_test.h5ad"
-    output_path = "../data/batch_list.json"
+    train_path = "../0_data/pancreas_train.h5ad"
+    test_path = "../0_data/pancreas_test.h5ad"
+    output_path = "../0_data/batch_list.json"
 
     batch_list = extract_all_batches([train_path, test_path], batch_column="tech")
     save_batch_list(batch_list, output_path)

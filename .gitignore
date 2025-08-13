@@ -184,12 +184,12 @@ cython_debug/
 /scanpy-main
 /scvi-tools-main
 /scvi-tools
-data/pancreas.h5ad
+0_data/pancreas.h5ad
 federated_scvi_flower/final_server_model_adata.h5ad
-data/data_random_split/pancreas_test.h5ad
-data/data_random_split/pancreas_train.h5ad
-data/pancreas_test.h5ad
-data/pancreas_train.h5ad
-data/pancreas_val.h5ad
-data/**/*.h5ad
+0_data/data_random_split/pancreas_test.h5ad
+0_data/data_random_split/pancreas_train.h5ad
+0_data/pancreas_test.h5ad
+0_data/pancreas_train.h5ad
+0_data/pancreas_val.h5ad
+0_data/**/*.h5ad
 

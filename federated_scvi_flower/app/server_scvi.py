@@ -65,8 +65,8 @@ def server_fn(context: Context) -> ServerAppComponents:
     print(f"[server_scvi] num_clients: {num_clients}, context.run_config: {context.run_config}")
 
     # Load HVG list and batch list
-    hvg_list_path = context.run_config.get("hvg_list_path", "data/hvg_list.json")
-    batch_list_path = context.run_config.get("batch_list_path", "data/batch_list.json")
+    hvg_list_path = context.run_config.get("hvg_list_path", "0_data/hvg_list.json")
+    batch_list_path = context.run_config.get("batch_list_path", "0_data/batch_list.json")
     hvg_list = load_hvg_list(hvg_list_path)
     batch_list = load_batch_list(batch_list_path)
 
@@ -80,7 +80,7 @@ def server_fn(context: Context) -> ServerAppComponents:
     setup_scvi_anndata(adata_ref, all_batches=batch_list)
 
     # Load test data
-    adata_test_path = context.run_config.get("adata_test_path", "data/pancreas_test.h5ad")
+    adata_test_path = context.run_config.get("adata_test_path", "0_data/pancreas_test.h5ad")
     adata_test = ad.read_h5ad(adata_test_path)
     adata_test = ensure_hvg_genes(adata_test, hvg_list)
     setup_scvi_anndata(adata_test, all_batches=batch_list)
@@ -110,7 +110,7 @@ app = ServerApp(server_fn=server_fn)
 
 # Save final model weights
 def save_final_model_and_adata(model):
-    model_path = f"federated_scvi_flower/models/{num_clients}_clients_{num_rounds}_rounds_{epochs}_epochs/model.pt"
+    model_path = f"federated_scvi_flower/app/models/{num_clients}_clients_{num_rounds}_rounds_{epochs}_epochs/model.pt"
     # Ensure parent directory exists
     os.makedirs(os.path.dirname(model_path), exist_ok=True)
     # Use model.state_dict() unless your model is wrapped in DataParallel

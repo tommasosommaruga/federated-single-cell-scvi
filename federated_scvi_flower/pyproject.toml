@@ -32,9 +32,9 @@ clientapp = "app.client_scvi:app"
 num_clients = 3
 num_rounds = 20
 local-epochs = 5
-hvg_list_path = "data/hvg_list.json"
-batch_list_path = "data/batch_list.json"
-adata_test_path = "data/pancreas_test.h5ad"
+hvg_list_path = "0_data/hvg_list.json"
+batch_list_path = "0_data/batch_list.json"
+adata_test_path = "0_data/pancreas_test.h5ad"
 
 [tool.flwr.federations]
 default = "local-simulation"

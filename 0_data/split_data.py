@@ -3,10 +3,10 @@ import anndata
 import numpy as np
 import os
 
-adata_path = 'data/pancreas.h5ad'
-train_path = 'data/pancreas_train.h5ad'
-val_path = 'data/pancreas_val.h5ad'
-test_path = 'data/pancreas_test.h5ad'
+adata_path = '0_data/pancreas.h5ad'
+train_path = '0_data/pancreas_train.h5ad'
+val_path = '0_data/pancreas_val.h5ad'
+test_path = '0_data/pancreas_test.h5ad'
 
 split_mode = "train_val_test"  # "simple" or "train_val_test"
 

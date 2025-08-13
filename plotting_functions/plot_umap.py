@@ -1,14 +1,9 @@
 import anndata
 import numpy as np
-import json
-import torch
 import os
 import matplotlib.pyplot as plt
 import scanpy as sc
 from scvi.model import SCVI
-from federated_scvi_flower.utils.model_utils_scvi import get_scvi_model, setup_scvi_anndata
-from federated_scvi_flower.utils.data_utils_scvi import ensure_hvg_genes, load_batch_list, load_hvg_list
-
 
 def generate_scvi_umap(adata_train: anndata.AnnData = None, adata_test: anndata.AnnData = None, 
                         model_weights_path: str = "federated_scvi_flower/final_server_model.pt", 
@@ -16,8 +11,8 @@ def generate_scvi_umap(adata_train: anndata.AnnData = None, adata_test: anndata.
                         data_combined = True):
 
     # Load datasets if not provided
-    if adata_train is None: adata_train = anndata.read_h5ad("data/pancreas_train.h5ad")
-    if adata_test is None: adata_test = anndata.read_h5ad("data/pancreas_test.h5ad")
+    if adata_train is None: adata_train = anndata.read_h5ad("0_data/pancreas_train.h5ad")
+    if adata_test is None: adata_test = anndata.read_h5ad("0_data/pancreas_test.h5ad")
 
     model = SCVI.load(model_weights_path, adata_train)
     model.is_trained = True

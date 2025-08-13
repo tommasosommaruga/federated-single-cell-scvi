@@ -79,12 +79,16 @@ def train_scvi(model, adata, max_epochs=10):
 #     return train_losses, test_losses
 
 class SCVILossLogger(Callback):
-    def __init__(self, model, adata_train, adata_test):
+    def __init__(self, model, adata_train, adata_test, patience=10):
         self.model = model
         self.adata_train = adata_train
         self.adata_test = adata_test
         self.train_losses = []
         self.test_losses = []
+        self.patience = patience
+        self.best_loss = float("inf")
+        self.wait = 0
+        self.stop_training = False
 
     def on_train_epoch_end(self, trainer, pl_module):
         train_loss = evaluate_scvi(self.model, self.adata_train)
@@ -93,8 +97,16 @@ class SCVILossLogger(Callback):
         self.test_losses.append(test_loss)
         print(f"Epoch {trainer.current_epoch + 1} - Train loss: {train_loss:.2f}, Test loss: {test_loss:.2f}")
 
-# Training function
-def train_scvi_with_loss_tracking(model, adata_train, adata_test, max_epochs=100):
-    loss_logger = SCVILossLogger(model, adata_train, adata_test)
+        if test_loss < self.best_loss:
+            self.best_loss = test_loss
+            self.wait = 0
+        else:
+            self.wait += 1
+            if self.wait >= self.patience:
+                print(f"Early stopping triggered at epoch {trainer.current_epoch + 1} (patience={self.patience})")
+                trainer.should_stop = True  # PyTorch Lightning style
+
+def train_scvi_with_loss_tracking(model, adata_train, adata_test, max_epochs=100, patience=10):
+    loss_logger = SCVILossLogger(model, adata_train, adata_test, patience=patience)
     model.train(max_epochs=max_epochs, callbacks=[loss_logger])
     return loss_logger.train_losses, loss_logger.test_losses

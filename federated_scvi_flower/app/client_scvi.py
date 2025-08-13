@@ -54,8 +54,8 @@ class ScviClient(fl.client.NumPyClient):
         return float(test_loss), self.adata_test.n_obs, {"test_loss": test_loss}
 
 def client_fn(context: Context):
-    hvg_list_path = context.run_config.get("hvg_list_path", "data/hvg_list.json")
-    batch_list_path = context.run_config.get("batch_list_path", "data/batch_list.json")
+    hvg_list_path = context.run_config.get("hvg_list_path", "0_data/hvg_list.json")
+    batch_list_path = context.run_config.get("batch_list_path", "0_data/batch_list.json")
 
     partition_id = context.node_config["partition-id"]
     num_clients = context.run_config.get("num_clients", 3)
@@ -64,8 +64,8 @@ def client_fn(context: Context):
     adata_train = load_partitioned_anndata(partition_id, num_clients)
     
     # Load full test data (not partitioned)
-    adata_test = anndata.read_h5ad(os.path.join("data", "pancreas_test.h5ad"))
-    
+    adata_test = anndata.read_h5ad(os.path.join("0_data", "pancreas_test.h5ad"))
+
     # Load HVG list and ensure genes in test set
     hvg_list = load_hvg_list(hvg_list_path)
     adata_train = ensure_hvg_genes(adata_train, hvg_list, partition_id=partition_id)

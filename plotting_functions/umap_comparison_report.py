@@ -7,11 +7,14 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import os
 import json
-from federated_scvi_flower.utils.model_utils_scvi import setup_scvi_anndata, get_scvi_model
+import sys
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-PANCREAS_DATA_PATH = "data/pancreas_test.h5ad"
+from federated_scvi_flower.app.utils.model_utils_scvi import setup_scvi_anndata, get_scvi_model
+
+PANCREAS_DATA_PATH = "0_data/pancreas_test.h5ad"
 CENTRALIZED_MODEL_PATH = "models/centralised_model"
-FEDERATED_MODEL_PATH = "federated_scvi_flower/models/3_clients_20_rounds_5_epochs/model.pt"   
+FEDERATED_MODEL_PATH = "federated_scvi_flower/app/models/3_clients_20_rounds_5_epochs/model.pt"   
 
 BATCH_KEY = "tech"
 CELL_TYPE_KEY = "celltype"
@@ -24,7 +27,7 @@ print("Data loaded successfully.")
 # 2. Preprocess Raw Data for UMAP
 # This step prepares the raw data for UMAP.
 print("Preprocessing raw data for UMAP...")
-with open("data/hvg_list.json") as f:
+with open("0_data/hvg_list.json") as f:
     hvg_list = json.load(f)
 adata = adata[:, hvg_list] 
 adata_raw_umap = adata.copy()

@@ -5,7 +5,7 @@ import logging
 import os
 
 # SAME FUNCTION AS IN federated_scvi_flower/data_utils_scvi.py
-def load_partitioned_anndata(partition_id, num_partitions, adata_path="data/pancreas_train.h5ad"):
+def load_partitioned_anndata(partition_id, num_partitions, adata_path="0_data/pancreas_train.h5ad"):
     adata = anndata.read_h5ad(adata_path)
     logging.info(f"[load_partitioned_anndata][partition {partition_id}] Loaded filtered AnnData: shape={adata.shape}, genes={list(adata.var_names[:10])}")
     
@@ -30,7 +30,7 @@ def get_dummy_start(global_gene_list):
     print(f"Dummy mask with {len(global_gene_list)} genes initialized.")
     return dummy
 
-def get_initial_gene_list(path="data/pancreas_train.h5ad"):
+def get_initial_gene_list(path="0_data/pancreas_train.h5ad"):
     adata = anndata.read_h5ad(path)
     global_gene_list = sorted(adata.var_names.tolist())
     print(f"Global gene list: {global_gene_list[:10]}... Total genes: {len(global_gene_list)}")

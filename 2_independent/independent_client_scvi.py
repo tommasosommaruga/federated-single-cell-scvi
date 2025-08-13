@@ -9,13 +9,12 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import logging
 
 # Project-specific modules
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from plot_umap import generate_scvi_umap
-from federated_scvi_flower.utils.data_utils_scvi import load_partitioned_anndata, ensure_hvg_genes, load_hvg_list, load_batch_list
-from federated_scvi_flower.utils.model_utils_scvi import train_scvi_with_loss_tracking, get_scvi_model, evaluate_scvi, setup_scvi_anndata
+from plotting_functions.plot_umap import generate_scvi_umap
+from federated_scvi_flower.app.utils.data_utils_scvi import load_partitioned_anndata, ensure_hvg_genes, load_hvg_list, load_batch_list
+from federated_scvi_flower.app.utils.model_utils_scvi import train_scvi_with_loss_tracking, get_scvi_model, evaluate_scvi, setup_scvi_anndata
 
 # Configuration
 os.environ["CUDA_VISIBLE_DEVICES"] = ""
@@ -26,17 +25,17 @@ sns.set_theme()
 
 print("Last run with scvi-tools version:", scvi.__version__)
 num_partitions = 3
-partition_id = 1
+partition_id = 2
 
 # Directories
-save_dir = "data"
+save_dir = "0_data"
 model_dir = os.path.join('models', f"independent_client_{partition_id}")
 hvg_path = os.path.join(save_dir, "hvg_list.json")
 batch_list_path = os.path.join(save_dir, "batch_list.json")
 
 # Load data
 adata = load_partitioned_anndata(partition_id=partition_id, num_partitions=num_partitions)
-adata_test = anndata.read_h5ad(os.path.join("data", "pancreas_test.h5ad"))
+adata_test = anndata.read_h5ad(os.path.join("0_data", "pancreas_test.h5ad"))
 
 # HVG filtering
 hvg_list = load_hvg_list(hvg_path)

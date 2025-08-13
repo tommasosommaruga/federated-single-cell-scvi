@@ -10,9 +10,9 @@ import seaborn as sns
 import torch
 import sys
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from plot_umap import generate_scvi_umap
-from federated_scvi_flower.utils.data_utils_scvi import load_batch_list, ensure_hvg_genes, load_hvg_list
-from federated_scvi_flower.utils.model_utils_scvi import get_scvi_model, train_scvi_with_loss_tracking, evaluate_scvi, setup_scvi_anndata
+from plotting_functions.plot_umap import generate_scvi_umap
+from federated_scvi_flower.app.utils.data_utils_scvi import load_batch_list, ensure_hvg_genes, load_hvg_list
+from federated_scvi_flower.app.utils.model_utils_scvi import get_scvi_model, train_scvi_with_loss_tracking, evaluate_scvi, setup_scvi_anndata
 
 # Force CPU usage (disable CUDA)
 os.environ["CUDA_VISIBLE_DEVICES"] = ""
@@ -34,13 +34,13 @@ model_dir = os.path.join(save_dir, "centralised_model")
 # adata_path = os.path.join(save_dir, "pancreas.h5ad")
 # adata = sc.read(adata_path, backup_url="https://figshare.com/ndownloader/files/24539828",)
 
-adata = anndata.read_h5ad("data/pancreas_train.h5ad")
-adata_test = anndata.read_h5ad("data/pancreas_test.h5ad")
+adata = anndata.read_h5ad("0_data/pancreas_train.h5ad")
+adata_test = anndata.read_h5ad("0_data/pancreas_test.h5ad")
 
-hvg_list = load_hvg_list("data/hvg_list.json")
+hvg_list = load_hvg_list("0_data/hvg_list.json")
 adata = ensure_hvg_genes(adata, hvg_list)
 adata_test = ensure_hvg_genes(adata_test, hvg_list)
-all_batches = load_batch_list("data/batch_list.json")
+all_batches = load_batch_list("0_data/batch_list.json")
 setup_scvi_anndata(adata, all_batches=all_batches)
 scvi_ref = get_scvi_model(adata)
 

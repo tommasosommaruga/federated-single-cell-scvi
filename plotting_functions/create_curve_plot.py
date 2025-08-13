@@ -6,6 +6,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import re
 import random
+import sys
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 def load_epochs_per_round(loss_name):
     match = re.search(r'(\d+)_epochs', loss_name)
@@ -108,7 +110,7 @@ def plot_training_curves(csv_folder, loss_name, output_folder='plots', mode='com
         for model in test_losses:
             if model in color_map:
                 if mode == 'compare_fed_scores':
-                    plt.plot(x_axes[model], test_losses[model], label=model, alpha=0.5) # color=color_map[model],
+                    plt.plot(x_axes[model], test_losses[model], label=model, alpha=0.7) # color=color_map[model],
                 else:
                     plt.plot(x_axes[model], test_losses[model], label=model, color=color_map[model])
         plt.xlabel('Epochs')
