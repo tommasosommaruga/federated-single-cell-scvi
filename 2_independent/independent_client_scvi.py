@@ -24,12 +24,12 @@ sc.set_figure_params(figsize=(6, 6), frameon=False)
 sns.set_theme()
 
 print("Last run with scvi-tools version:", scvi.__version__)
-num_partitions = 3
-partition_id = 2
+num_partitions = 7
+partition_id = 6
 
 # Directories
 save_dir = "0_data"
-model_dir = os.path.join('models', f"independent_client_{partition_id}")
+model_dir = os.path.join('models', f"{num_partitions}_cl_independent_client_{partition_id}")
 hvg_path = os.path.join(save_dir, "hvg_list.json")
 batch_list_path = os.path.join(save_dir, "batch_list.json")
 
@@ -67,7 +67,7 @@ else:
     scvi_model.save(model_dir, overwrite=True)
 
     # Save loss curves
-    loss_log_path = os.path.join("loss_logs", f"loss_curve_client_{partition_id}.csv")
+    loss_log_path = os.path.join("loss_logs", f"loss_curve_client_{partition_id}_{num_partitions}_cl.csv")
     loss_df = pd.DataFrame({
         "epoch": list(range(1, len(train_losses) + 1)),
         "train_loss": train_losses,
@@ -76,7 +76,7 @@ else:
     loss_df.to_csv(loss_log_path, index=False)
     print(f"[independent_client_{partition_id}] Loss curve saved to {loss_log_path}")
 
-save_dir = f"umap/independent_client_{partition_id}"
+save_dir = f"umap/{num_partitions}_cl_independent_client_{partition_id}"
 os.makedirs(save_dir, exist_ok=True)
 
 # Old code for UMAP plotting

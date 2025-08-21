@@ -29,7 +29,7 @@ clientapp = "app.client_scvi:app"
 
 [tool.flwr.app.config]
 # Defines the number of clients to simulate.
-num_clients = 3
+num_clients = 7
 num_rounds = 20
 local-epochs = 5
 hvg_list_path = "0_data/hvg_list.json"
@@ -40,4 +40,4 @@ adata_test_path = "0_data/pancreas_test.h5ad"
 default = "local-simulation"
 
 [tool.flwr.federations.local-simulation]
-options.num-supernodes = 3
+options.num-supernodes = 7

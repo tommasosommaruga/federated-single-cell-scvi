@@ -14,7 +14,7 @@ from federated_scvi_flower.app.utils.model_utils_scvi import setup_scvi_anndata,
 
 PANCREAS_DATA_PATH = "0_data/pancreas_test.h5ad"
 CENTRALIZED_MODEL_PATH = "models/centralised_model"
-FEDERATED_MODEL_PATH = "federated_scvi_flower/app/models/3_clients_20_rounds_5_epochs/model.pt"   
+FEDERATED_MODEL_PATH = "federated_scvi_flower/app/models/7_clients_20_rounds_5_epochs/model.pt"   
 
 BATCH_KEY = "tech"
 CELL_TYPE_KEY = "celltype"
