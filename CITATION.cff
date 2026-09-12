@@ -1,0 +1,23 @@
+cff-version: 1.2.0
+message: "If you use this software or results, please cite it as below."
+title: "Federated Single-Cell Variational Inference (scVI) with Flower"
+authors:
+  - family-names: Sommaruga
+    given-names: Tommaso
+    email: tommaso.sommaruga@student.supsi.ch
+repository-code: "https://github.com/tommasosommaruga/SCVI"
+license: CC-BY-4.0
+year: 2025
+type: software
+abstract: >-
+  Thesis project implementing centralized, independent-client, and federated
+  training of scVI (scvi-tools) on pancreas scRNA-seq data using the Flower
+  federated learning framework, including federated highly variable gene (HVG)
+  selection and evaluation via loss curves, UMAP, and clustering metrics.
+keywords:
+  - federated learning
+  - scVI
+  - single-cell RNA-seq
+  - Flower
+  - variational autoencoder
+  - highly variable genes
