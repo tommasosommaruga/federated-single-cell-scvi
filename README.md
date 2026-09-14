@@ -10,7 +10,7 @@ The codebase compares three training setups on pancreas scRNA-seq data:
 
 It also includes a **federated highly variable gene (HVG)** selection app so clients can agree on a shared gene list without sharing raw counts.
 
-**Author:** Tommaso Sommaruga (`tommaso.sommaruga@student.supsi.ch`)  
+**Author:** Tommaso Sommaruga (`tommy.sommaruga@gmail.com`)  
 **License:** [CC BY 4.0](LICENSE) — free to use; **attribution / citation required** (see [Citation](#citation)).
 
 ---
